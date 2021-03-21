@@ -1,5 +1,0 @@
-<launch>
-	<arg name="mode" />
-
-	<node pkg="exercises" type="robot_avoidance.py" name="robot_avoidance" args="--mode=$(arg mode)" output="screen"></node>
-</launch>

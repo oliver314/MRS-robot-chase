@@ -2,7 +2,7 @@ To run Gazebo:
 > roslaunch exercises gazebo_chase.launch
 
 To run obstacle avoidance:
-> roslaunch exercises robot_avoidance.launch mode:=braitenberg
+> roslaunch exercises robot_chase.launch mode_baddies:=random mode_police:=closest
 
 To run RViz:
 > roslaunch exercises rviz.launch

@@ -1,0 +1,6 @@
+<launch>
+	<arg name="mode_baddies" />
+	<arg name="mode_police" />
+
+	<node pkg="exercises" type="robot_chase.py" name="robot_chase" args="--mode_baddies=$(arg mode_baddies) --mode_police=$(arg mode_police)" output="screen"></node>
+</launch>

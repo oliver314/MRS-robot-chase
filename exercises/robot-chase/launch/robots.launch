@@ -2,21 +2,51 @@
   <!-- No namespace here as we will share this description. 
        Access with slash at the beginning (for robot description) -->
 
-  <!-- BEGIN ROBOT 1-->
-  <group ns="robot1">
-    <param name="tf_prefix" value="robot1_tf" />
+  <group ns="police1">
+    <param name="tf_prefix" value="police1_tf" />
     <include file="$(find exercises)/robot-chase/launch/one_robot.launch" >
-      <arg name="init_pose" value="-x 1 -y 1 -z 0" />
-      <arg name="robot_name"  value="Robot1" />
+      <arg name="init_pose" value="-x -1 -y 1 -z 0" />
+      <arg name="robot_name"  value="police1" />
     </include>
   </group>
 
-  <!-- BEGIN ROBOT 2-->
-  <group ns="robot2">
-    <param name="tf_prefix" value="robot2_tf" />
+  <group ns="police2">
+    <param name="tf_prefix" value="police2_tf" />
     <include file="$(find exercises)/robot-chase/launch/one_robot.launch" >
-      <arg name="init_pose" value="-x -1 -y 1 -z 0" />
-      <arg name="robot_name"  value="Robot2" />
+      <arg name="init_pose" value="-x 0 -y 1 -z 0" />
+      <arg name="robot_name"  value="police2" />
+    </include>
+  </group>
+
+  <group ns="police3">
+    <param name="tf_prefix" value="police3_tf" />
+    <include file="$(find exercises)/robot-chase/launch/one_robot.launch" >
+      <arg name="init_pose" value="-x 1.5 -y 1 -z 0" />
+      <arg name="robot_name"  value="police3" />
+    </include>
+  </group>
+
+  <group ns="baddie1">
+    <param name="tf_prefix" value="baddie1_tf" />
+    <include file="$(find exercises)/robot-chase/launch/one_robot.launch" >
+      <arg name="init_pose" value="-x -1 -y -1.1 -z 0" />
+      <arg name="robot_name"  value="baddie1" />
+    </include>
+  </group>
+
+  <group ns="baddie2">
+    <param name="tf_prefix" value="baddie2_tf" />
+    <include file="$(find exercises)/robot-chase/launch/one_robot.launch" >
+      <arg name="init_pose" value="-x 0 -y -0.9 -z 0" />
+      <arg name="robot_name"  value="baddie2" />
+    </include>
+  </group>
+
+  <group ns="baddie3">
+    <param name="tf_prefix" value="baddie3_tf" />
+    <include file="$(find exercises)/robot-chase/launch/one_robot.launch" >
+      <arg name="init_pose" value="-x 1.5 -y -1 -z 0" />
+      <arg name="robot_name"  value="baddie3" />
     </include>
   </group>
 </launch>
