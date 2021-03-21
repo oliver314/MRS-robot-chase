@@ -133,6 +133,6 @@ catkin_install_python(PROGRAMS
 )
 
 install(DIRECTORY 
-    part0 part1 part2
+    part0 part1 part2 robot-chase
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
