@@ -15,5 +15,5 @@ launch - gazebo_chase.launch:
 		- includes file empty_world.launch with arg simple.world (/opt/ros/kinetic/gazebo_ros/launch)
 		- sets robot_description
 		- Includess robots.launch: Create a node for each robot in its own namespace of package gazebo_ros with model turtlebot3
-	- robot_avoidance:
-		- Spawns node of type robot avoidance with parameter mode (braitenberger, etc)
+	- robot_chase:
+		- Spawns node of type robot chase with modes parameters as above
