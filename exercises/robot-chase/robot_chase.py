@@ -11,7 +11,7 @@ import rospy
 from robots import baddie, police_car
 
 
-DISTANCE_CONSIDERED_CAUGHT = 0.2
+DISTANCE_CONSIDERED_CAUGHT = 0.25
 
 
 # --------------------------- CONTROL METHODS ------------------------
@@ -38,6 +38,7 @@ def baddies_random_movement_method(baddies, police):
 
 def police_closest_method(police, baddies):
   '''every police car follows the baddie it is closest to'''
+  print("Note police cars have no obstacle avoidance if the closest method is used")
   for police_car in police:
     closest_baddie = None 
     min_distance = np.inf
@@ -45,7 +46,7 @@ def police_closest_method(police, baddies):
       if np.linalg.norm(police_car.pose[:2] - baddie.pose[:2]) < min_distance and not baddie.caught:
         min_distance = np.linalg.norm(police_car.pose[:2] - baddie.pose[:2])
         closest_baddie = baddie
-      police_car.set_vel_holonomic(*(-police_car.pose[:2] + baddie.pose[:2]))
+    police_car.set_vel_holonomic(*(-police_car.pose[:2] + closest_baddie.pose[:2]))
     
 
 # ----------------------------MAIN FUNCTION ----------------------------

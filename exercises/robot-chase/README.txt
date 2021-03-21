@@ -10,7 +10,7 @@ To run RViz:
 Folders:
 
 worlds - simple.world, loads scene and physics
-models - model.config loads model.sdf where walls and obstacles are specified
+models - What should be models is actually linked to models in part 1. Modify worlds in part1/models. model.config loads model.sdf where walls and obstacles are specified
 launch - gazebo_chase.launch:
 		- includes file empty_world.launch with arg simple.world (/opt/ros/kinetic/gazebo_ros/launch)
 		- sets robot_description
