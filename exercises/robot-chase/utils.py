@@ -98,3 +98,38 @@ def feedback_linearized(pose, velocity, epsilon):
   u = velocity[X] * np.cos(pose[YAW]) + velocity[Y] * np.sin(pose[YAW]) #m/s
   w = (1/epsilon) * (-velocity[X] * np.sin(pose[YAW]) + velocity[Y] * np.cos(pose[YAW])) # [rad/s] going counter-clockwise.
   return u, w
+
+
+def normalize(v):
+  n = np.linalg.norm(v)
+  if n < 1e-2:
+    return np.zeros_like(v)
+  return v / n
+
+
+def get_repulsive_field_from_obstacles(position, a, b, WALL_OFFSET, obstacle_positions, obstacle_radii):
+
+    v = np.zeros(2, dtype=np.float32)
+
+    def adapt_v(delta_x_vector, v):
+      distance = np.linalg.norm(delta_x_vector)
+      v_cand = - a*(1./b - 1/distance) * 1/distance**2 * delta_x_vector
+      if distance < b:
+        v = v + v_cand
+      return v
+
+    for obstacle_pos, obstacle_rad in zip(obstacle_positions, obstacle_radii):
+      delta_x_vector_to_center = position - obstacle_pos
+      delta_x_vector = delta_x_vector_to_center - obstacle_rad * normalize(delta_x_vector_to_center)
+      v = adapt_v(delta_x_vector, v)
+
+    delta_x_vector_to_wall = position - np.array([position[0], WALL_OFFSET])
+    v = adapt_v(delta_x_vector_to_wall, v)
+    delta_x_vector_to_wall = position - np.array([position[0], -WALL_OFFSET])
+    v = adapt_v(delta_x_vector_to_wall, v)
+    delta_x_vector_to_wall = position - np.array([WALL_OFFSET, position[1]])
+    v = adapt_v(delta_x_vector_to_wall, v)
+    delta_x_vector_to_wall = position - np.array([-WALL_OFFSET, position[1]])
+    v = adapt_v(delta_x_vector_to_wall, v)
+    
+    return v

@@ -9,9 +9,13 @@ import numpy as np
 import rospy
 
 from robots import baddie, police_car
+from utils import get_repulsive_field_from_obstacles, normalize
 
 
 DISTANCE_CONSIDERED_CAUGHT = 0.25
+WALL_OFFSET = 4.
+CYLINDER_POSITIONS = np.array([[.3, .2]], dtype=np.float32)
+CYLINDER_RADIUSS = [.3]
 
 
 # --------------------------- CONTROL METHODS ------------------------
@@ -49,6 +53,43 @@ def police_closest_method(police, baddies):
     police_car.set_vel_holonomic(*(-police_car.pose[:2] + closest_baddie.pose[:2]))
     
 
+def baddies_pot_field_method(baddies, police):
+  '''potential field method for baddies: assumes baddies know location of police'''
+  P_gain_repulsive = 3
+  rep_cutoff_distance = 2
+  for baddie in baddies:
+    # Have police cars as obstacles
+    obstacle_positions = np.append(CYLINDER_POSITIONS, np.array([police_car.pose[:2] for police_car in police]), 0)
+    obstacle_radii = np.append(CYLINDER_RADIUSS, [0.01 for police_car in police], 0)
+
+    v = get_repulsive_field_from_obstacles(baddie.pose[:2], P_gain_repulsive, rep_cutoff_distance, WALL_OFFSET, obstacle_positions, obstacle_radii)
+    
+    baddie.set_vel_holonomic(*v)
+
+
+def police_pot_field_method(police, baddies):
+  '''potential field method for police'''
+  P_gain_repulsive = 1
+  rep_cutoff_distance = 1
+  P_gain = 2
+
+  for police_car in police:
+    obstacle_positions = CYLINDER_POSITIONS
+    obstacle_radii = CYLINDER_RADIUSS
+    for police_car_adj in police:
+      if police_car_adj != police_car:
+        obstacle_positions = np.append(obstacle_positions, np.array([police_car_adj.pose[:2]]), 0)
+        obstacle_radii = np.append(obstacle_radii, [0.01], 0)
+    v = get_repulsive_field_from_obstacles(police_car.pose[:2], P_gain_repulsive, rep_cutoff_distance, WALL_OFFSET, obstacle_positions, obstacle_radii)
+
+    # attractive field:
+    for baddie in baddies:
+      if not baddie.caught:
+        v += - P_gain * normalize(police_car.pose[:2] - baddie.pose[:2])
+        break
+    police_car.set_vel_holonomic(*v)
+
+
 # ----------------------------MAIN FUNCTION ----------------------------
 
 
@@ -62,17 +103,26 @@ def check_if_all_caught(police, baddies):
   for baddie in baddies:
     if not baddie.caught:
       return False
+  # if we get here, all baddies caught! Stop the police pro forma
+  for police_car in police:
+    police_car.set_vel_holonomic(0, 0)
+  for baddie in baddies:
+    baddie.set_vel_holonomic(0, 0)
   return True
 
 def run(args):
   rospy.init_node('robot_chase')
   if args.mode_baddies == "random":
     baddies_method = baddies_random_movement_method
+  elif args.mode_baddies == "potential_field":
+    baddies_method = baddies_pot_field_method
   else:
     raise NotImplementedError("%s not implemented" % args.mode_baddies)
 
   if args.mode_police == "closest":
     police_method = police_closest_method
+  elif args.mode_police == "potential_field":
+    police_method = police_pot_field_method
   else:
     raise NotImplementedError("%s not implemented" % args.mode_police)
 
@@ -103,8 +153,8 @@ def run(args):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Runs robot chase')
-  parser.add_argument('--mode_baddies', action='store', default='random', help='Method.', choices=['random'])
-  parser.add_argument('--mode_police', action='store', default='closest', help='Method.', choices=['closest'])
+  parser.add_argument('--mode_baddies', action='store', default='random', help='Method.', choices=['random', 'potential_field'])
+  parser.add_argument('--mode_police', action='store', default='closest', help='Method.', choices=['closest', 'potential_field'])
   args, unknown = parser.parse_known_args()
   try:
     run(args)

@@ -16,8 +16,9 @@ import rospy
 from utils import SimpleLaser, GroundtruthPose, feedback_linearized
 
 
-MAX_VELOCITY_POLICE = 1
+MAX_VELOCITY_POLICE = 0.6
 MAX_VELOCITY_BADDIES = 1
+MAX_ANGULAR_VELOCITY = 0.8
 
 
 class actor(object):
@@ -59,7 +60,7 @@ class baddie(actor):
       vel_msg.angular.z = 0
     else:
       vel_msg.linear.x = max(-MAX_VELOCITY_BADDIES, min(u, MAX_VELOCITY_BADDIES))
-      vel_msg.angular.z = w
+      vel_msg.angular.z = max(-MAX_ANGULAR_VELOCITY, min(w, MAX_ANGULAR_VELOCITY))
     self.publisher.publish(vel_msg)
 
   @property
@@ -79,5 +80,5 @@ class police_car(actor):
   def set_vel(self, u, w):
     vel_msg = Twist()
     vel_msg.linear.x = max(-MAX_VELOCITY_POLICE, min(u, MAX_VELOCITY_POLICE))
-    vel_msg.angular.z = w
+    vel_msg.angular.z = max(-MAX_ANGULAR_VELOCITY, min(w, MAX_ANGULAR_VELOCITY))
     self.publisher.publish(vel_msg)
