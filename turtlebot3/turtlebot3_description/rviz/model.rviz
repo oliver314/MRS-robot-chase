@@ -3,7 +3,13 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /LaserScan1
+        - /LaserScan2
+        - /LaserScan3
+        - /LaserScan4
+        - /LaserScan5
+        - /LaserScan6
       Splitter Ratio: 0.602941155
     Tree Height: 1109
   - Class: rviz/Selection
@@ -347,7 +353,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.00999999978
+      Size (m): 0.0299999993
       Style: Flat Squares
       Topic: /police1/scan
       Unreliable: false
@@ -377,7 +383,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.00999999978
+      Size (m): 0.0299999993
       Style: Flat Squares
       Topic: /police2/scan
       Unreliable: false
@@ -407,7 +413,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.00999999978
+      Size (m): 0.0299999993
       Style: Flat Squares
       Topic: /police3/scan
       Unreliable: false
@@ -437,7 +443,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.00999999978
+      Size (m): 0.0299999993
       Style: Flat Squares
       Topic: /baddie1/scan
       Unreliable: false
@@ -467,7 +473,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.00999999978
+      Size (m): 0.0299999993
       Style: Flat Squares
       Topic: /baddie2/scan
       Unreliable: false
@@ -497,12 +503,30 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.00999999978
+      Size (m): 0.0299999993
       Style: Flat Squares
       Topic: /baddie3/scan
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
+      Value: true
+    - Alpha: 0.5
+      Cell Size: 1
+      Class: rviz/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Line Style:
+        Line Width: 0.0299999993
+        Value: Lines
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: <Fixed Frame>
       Value: true
   Enabled: true
   Global Options:
@@ -538,7 +562,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 274.382568
+      Scale: 114.056984
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
       X: 0.00656098779
