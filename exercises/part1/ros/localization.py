@@ -41,6 +41,7 @@ WALL_OFFSET = 2.
 CYLINDER_POSITION = np.array([.3, .2], dtype=np.float32)
 CYLINDER_RADIUS = .3 + ROBOT_RADIUS
 
+PL = True
 
 def braitenberg(front, front_left, front_right, left, right):
   '''a braitenberg controller that takes the range
@@ -237,7 +238,10 @@ class Particle(object):
 
 class SimpleLaser(object):
   def __init__(self):
-    rospy.Subscriber('/scan', LaserScan, self.callback)
+    if PL:
+      rospy.Subscriber('/police1/scan', LaserScan, self.callback)
+    else:
+      rospy.Subscriber('/scan', LaserScan, self.callback)
     self._angles = [0., np.pi / 4., -np.pi / 4., np.pi / 2., -np.pi / 2.]
     self._width = np.pi / 180. * 3.1  # 3.1 degrees cone of view (3 rays).
     self._measurements = [float('inf')] * len(self._angles)
@@ -281,7 +285,10 @@ class Motion(object):
   def __init__(self):
     self._previous_time = None
     self._delta_pose = np.array([0., 0., 0.], dtype=np.float32)
-    rospy.Subscriber('/odom', Odometry, self.callback)
+    if PL:
+      rospy.Subscriber('/police1/odom', Odometry, self.callback)
+    else:
+      rospy.Subscriber('/odom', Odometry, self.callback)
 
   def callback(self, msg):
     u = msg.twist.twist.linear.x
@@ -342,7 +349,10 @@ def run(args):
 
   # Update control every 100 ms.
   rate_limiter = rospy.Rate(100)
-  publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=5)
+  if PL:
+    publisher = rospy.Publisher('/police1/cmd_vel', Twist, queue_size=5)
+  else:
+    publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=5)
   particle_publisher = rospy.Publisher('/particles', PointCloud, queue_size=1)
   laser = SimpleLaser()
   motion = Motion()
@@ -395,7 +405,10 @@ def run(args):
     particle_msg = PointCloud()
     particle_msg.header.seq = frame_id
     particle_msg.header.stamp = rospy.Time.now()
-    particle_msg.header.frame_id = '/odom'
+    if PL:
+      particle_msg.header.frame_id = '/police1/odom'
+    else:
+      particle_msg.header.frame_id = '/odom'
     intensity_channel = ChannelFloat32()
     intensity_channel.name = 'intensity'
     particle_msg.channels.append(intensity_channel)

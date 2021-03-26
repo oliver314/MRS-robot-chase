@@ -20,6 +20,9 @@ CYLINDER_RADIUSS = [.3]
 
 # --------------------------- CONTROL METHODS ------------------------
 
+##############################################
+#### Simple method (random + closest) ########
+##############################################
 
 def baddies_random_movement_method(baddies, police):
   '''every baddie performs obstacle avoidance by using a braitenberg controller based on its scan measurements
@@ -39,7 +42,6 @@ def baddies_random_movement_method(baddies, police):
       u, w = braitenberg_controller(*baddie.scan())
       baddie.set_vel(u, w)
 
-
 def police_closest_method(police, baddies):
   '''every police car follows the baddie it is closest to'''
   print("Note police cars have no obstacle avoidance if the closest method is used")
@@ -52,6 +54,9 @@ def police_closest_method(police, baddies):
         closest_baddie = baddie
     police_car.set_vel_holonomic(*(-police_car.pose[:2] + closest_baddie.pose[:2]))
     
+##############################################
+#### Potential field method ##################
+##############################################
 
 def baddies_pot_field_method(baddies, police):
   '''potential field method for baddies: assumes baddies know location of police'''
@@ -90,7 +95,19 @@ def police_pot_field_method(police, baddies):
     police_car.set_vel_holonomic(*v)
 
 
-# ----------------------------MAIN FUNCTION ----------------------------
+##############################################
+#### Testing for estimation stuff ############
+##############################################
+
+def baddies_est_test_method(baddies, police):
+  pass
+
+def police_est_test_method(police, baddies):
+  police[0].set_vel(0.1, 0)
+  pass
+
+
+# ----------------------------SUPPORT FUNCTIONS ----------------------------
 
 
 def check_if_any_caught(police, baddies):
@@ -110,12 +127,16 @@ def check_if_all_caught(police, baddies):
     baddie.set_vel_holonomic(0, 0)
   return True
 
+# ----------------------------MAIN FUNCTION ----------------------------
+
 def run(args):
   rospy.init_node('robot_chase')
   if args.mode_baddies == "random":
     baddies_method = baddies_random_movement_method
   elif args.mode_baddies == "potential_field":
     baddies_method = baddies_pot_field_method
+  elif args.mode_baddies == "est_test":
+    baddies_method = baddies_est_test_method
   else:
     raise NotImplementedError("%s not implemented" % args.mode_baddies)
 
@@ -123,6 +144,8 @@ def run(args):
     police_method = police_closest_method
   elif args.mode_police == "potential_field":
     police_method = police_pot_field_method
+  elif args.mode_police == "est_test":
+    police_method = police_est_test_method
   else:
     raise NotImplementedError("%s not implemented" % args.mode_police)
 
@@ -139,7 +162,7 @@ def run(args):
   while not rospy.is_shutdown():
 
     baddies_method(baddies, police)
-    police_method(police, baddies)
+    police_method(police, baddie)
 
     check_if_any_caught(police, baddies)
 
@@ -153,8 +176,8 @@ def run(args):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Runs robot chase')
-  parser.add_argument('--mode_baddies', action='store', default='random', help='Method.', choices=['random', 'potential_field'])
-  parser.add_argument('--mode_police', action='store', default='closest', help='Method.', choices=['closest', 'potential_field'])
+  parser.add_argument('--mode_baddies', action='store', default='random', help='Method.', choices=['random', 'potential_field', 'est_test'])
+  parser.add_argument('--mode_police', action='store', default='closest', help='Method.', choices=['closest', 'potential_field', 'est_test'])
   args, unknown = parser.parse_known_args()
   try:
     run(args)

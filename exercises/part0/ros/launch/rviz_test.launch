@@ -1,0 +1,27 @@
+<launch>
+    <arg name="urdf_file" default="$(find xacro)/xacro --inorder '$(find turtlebot3_description)/urdf/turtlebot3_burger_red.urdf.xacro'"/>
+    <param name="robot_description_police1" command="$(arg urdf_file)"/>
+    <param name="robot_description_police2" command="$(arg urdf_file)"/>
+    <param name="robot_description" command="$(arg urdf_file)"/>
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher_police1">
+    <param name="tf_prefix" value="police1" />
+    <remap from="joint_states" to="police1/joint_states"/>
+    <remap from="robot_description_police1" to="police1/robot_description_police1"/>"
+    </node>
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher_police2">
+    <param name="tf_prefix" value="police2" />
+    <remap from="joint_states" to="police2/joint_states"/>
+    <remap from="robot_description_police2" to="police2/robot_description_police2"/>"
+    </node>
+
+    <node pkg="tf" type="static_transform_publisher" name="map_broadcaster" args="0 0 0 0 0 0 map occupancy_grid 100" />
+    <node pkg="tf" type="static_transform_publisher" name="map_to_police1" args="0 0 0 0 0 0 map police1/odom 100" />
+    <node pkg="tf" type="static_transform_publisher" name="map_to_police2" args="0 0 0 0 0 0 map police2/odom 100" />
+
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot3_gazebo)/rviz/turtlebot3_gazebo_model.rviz"/>
+
+
+</launch>

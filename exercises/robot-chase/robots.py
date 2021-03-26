@@ -24,6 +24,7 @@ MAX_ANGULAR_VELOCITY = 0.8
 class actor(object):
     def __init__(self, name):
       self.laser = SimpleLaser(name)
+      self.lidar = SimpleLaser(name)
       self.groundtruth = GroundtruthPose(name)
       self.publisher = rospy.Publisher("/%s/cmd_vel" % name, Twist, queue_size=5)
       self.name = name

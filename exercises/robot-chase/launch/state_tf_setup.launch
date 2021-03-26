@@ -1,0 +1,17 @@
+<launch>
+    <arg name="robot_name"/>
+    <arg name="robot_type"/>
+
+    <arg name="urdf_file" value="$(find xacro)/xacro --inorder '$(find turtlebot3_description)/urdf/turtlebot3_$(arg robot_type).urdf.xacro'"/>
+    <param name="robot_description_$(arg robot_name)" command="$(arg urdf_file)"/>
+    <param name="robot_description" command="$(arg urdf_file)"/>
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher_$(arg robot_name)">
+    <param name="tf_prefix" value="$(arg robot_name)" />
+    <remap from="joint_states" to="$(arg robot_name)/joint_states"/>
+    <remap from="robot_description_$(arg robot_name)" to="$(arg robot_name)/robot_description_$(arg robot_name)"/>"
+    </node>
+
+    <node pkg="tf" type="static_transform_publisher" name="map_to_$(arg robot_name)" args="0 0 0 0 0 0 map $(arg robot_name)/odom 100" />
+
+</launch>

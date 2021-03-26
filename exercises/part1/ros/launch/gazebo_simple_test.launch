@@ -1,0 +1,30 @@
+<launch>
+
+    <!-- Launch gazebo world -->
+    <arg name="use_gui" default="true"/>
+    <arg name="model" default="burger" doc="model type [burger, waffle, waffle_pi]"/>
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find exercises)/part1/ros/worlds/simple.world"/>
+        <arg name="paused" value="true"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="$(arg use_gui)"/>
+        <arg name="headless" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+
+    <!-- Launch robots -->
+    <group ns="police1">
+        <param name="tf_prefix" value="police1" />
+        <param name="robot_description_police1" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_burger_red.urdf.xacro" />
+        <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-x -1 -y -1 -z 0 -urdf -param robot_description_police1 -model police1"/>
+    </group>
+
+    <group ns="police2">
+        <param name="tf_prefix" value="police2" />
+        <param name="robot_description_police2" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_burger_red.urdf.xacro" />
+        <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-x -1 -y 1 -z 0 -urdf -param robot_description_police2 -model police2"/>
+    </group>
+
+</launch>

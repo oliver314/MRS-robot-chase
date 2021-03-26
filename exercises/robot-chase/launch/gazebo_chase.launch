@@ -1,21 +1,23 @@
 <launch>
-  <!-- 
-       Default GUI to true for local Gazebo client. Allows override 
-       to set disable GUI for RoboMaker. See part0.launch. 
-  -->
-  <arg name="use_gui" default="true"/>
 
-  <arg name="model" default="burger" doc="model type [burger, waffle, waffle_pi]"/>
+    <!-- Launch the gazebo environment -->
+    <arg name="use_gui" default="true"/>
 
-  <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find exercises)/robot-chase/worlds/simple.world"/>
-    <arg name="paused" value="true"/>
-    <arg name="use_sim_time" value="true"/>
-    <arg name="gui" value="$(arg use_gui)"/>
-    <arg name="headless" value="false"/>
-    <arg name="debug" value="false"/>
-  </include>
+    <arg name="model" default="burger" doc="model type [burger, waffle, waffle_pi]"/>
 
-  <include file="$(find exercises)/robot-chase/launch/robots.launch"/>
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find exercises)/robot-chase/worlds/simple.world"/>
+        <arg name="paused" value="true"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="$(arg use_gui)"/>
+        <arg name="headless" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+    <!-- Ucomment to start the the occupancy grid node if necessary -->
+    <!-- <node pkg="tf" type="static_transform_publisher" name="map_broadcaster" args="0 0 0 0 0 0 map occupancy_grid 100" /> -->
+
+    <!-- Launch the robots -->
+    <include file="$(find exercises)/robot-chase/launch/robots.launch"/>
 
 </launch>
