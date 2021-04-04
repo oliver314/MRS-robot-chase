@@ -13,7 +13,7 @@ Modes for Baddies:
 Modes for Police:
 'closest', 'potential_field', 'est_test'
 
-Folders:
+Folders:roslaunch exercises robot_chase.launch mode_baddies:=BADDIES_MODE mode_police:=BADDIES_MODE
 
 worlds - simple.world, loads scene and physics
 models - What should be models is actually linked to models in part 1. Modify worlds in part1/models. model.config loads model.sdf where walls and obstacles are specified

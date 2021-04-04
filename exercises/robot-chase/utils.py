@@ -15,9 +15,10 @@ import rospy
 
 
 class SimpleLaser(object):
-  def __init__(self, name):
+  def __init__(self, name, angles):
     rospy.Subscriber('/%s/scan' % name, LaserScan, self.callback)
-    self._angles = [0., np.pi / 4., -np.pi / 4., np.pi / 2., -np.pi / 2.]
+    self._angles = angles
+    #self._angles = [0., np.pi / 4., -np.pi / 4., np.pi / 2., -np.pi / 2.]
     self._width = np.pi / 180. * 10.  # 10 degrees cone of view.
     self._measurements = [float('inf')] * len(self._angles)
     self._indices = None

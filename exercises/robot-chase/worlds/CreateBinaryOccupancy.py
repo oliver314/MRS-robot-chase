@@ -1,0 +1,79 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import numpy as np
+import cv2
+import os
+
+
+size_m = 10         # 10m x 10m size
+resolution_m = 0.01 # 1cm resolution
+size_px = int(size_m/resolution_m) # image is of size: size_px x size_px
+
+# set inflation of lines. (centre to edge inflation distance)
+inflation_m = 0.15
+draw_thickness = int(2 * inflation_m / resolution_m)
+
+
+# Define rectangles here
+# horizontal, vertical, centre x, centre y, angle (degrees)
+rect1 = [8.15, 8.15, 0, 0, 0]
+
+rect = [rect1]
+
+# Define circles here
+# radius, centre x, centre y
+circle1 = [0.3, 0.3, 0.2]
+#circle2 = [0.01, 0, 0]
+
+circle = [circle1]#, circle2]
+
+
+# Create a white image
+img = 255*np.ones((size_px,size_px,3), np.uint8)
+
+# plot rectangles
+for r in rect:
+    rh = r[0]
+    rv = r[1]
+    rx = r[2]
+    ry = r[3]
+    theta = r[4] * np.pi / 180
+
+    rot = np.array(((np.cos(theta), -np.sin(theta)),
+                    (np.sin(theta), np.cos(theta))))
+
+    corners = np.transpose(np.array([[rh/2,rv/2],[-rh/2,rv/2],[-rh/2,-rv/2],[rh/2,-rv/2]]))
+    corners = np.transpose(np.matmul(rot, corners)) + np.array([[rx,ry],[rx,ry],[rx,ry],[rx,ry]])
+    corners = np.true_divide(corners, resolution_m)
+
+    corners[:, 1] *= -1
+    corners += np.array([[size_px/2,size_px/2],[size_px/2,size_px/2],[size_px/2,size_px/2],[size_px/2,size_px/2]])
+    corners = corners.astype(np.int32)
+
+    corners = corners.reshape((-1,1,2))
+    cv2.polylines(img, [corners], True, (0, 0, 0), draw_thickness)
+
+# plot circles
+for c in circle:
+    cr = c[0]
+    ch = c[1]
+    cv = c[2]
+
+    centre = np.array([ch/resolution_m + size_px/2,-cv/resolution_m + size_px/2]).astype(np.int32)
+    radius = int(cr/resolution_m)
+    cv2.circle(img, tuple(centre), radius, (0, 0, 0), draw_thickness)
+    print(centre, radius)
+
+# Sanity check for any points
+#cv2.circle(img, (506,468), radius=0, color=(0, 0, 255), thickness=-1)
+
+cv2.imshow('image',img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+path = os.path.abspath(os.getcwd())
+path = os.path.join(path, "../map.png")
+
+cv2.imwrite(path, img)

@@ -7,6 +7,8 @@ from __future__ import print_function
 import argparse
 import numpy as np
 import rospy
+import cv2
+import os
 
 from robots import baddie, police_car
 from utils import get_repulsive_field_from_obstacles, normalize
@@ -17,6 +19,15 @@ WALL_OFFSET = 4.
 CYLINDER_POSITIONS = np.array([[.3, .2]], dtype=np.float32)
 CYLINDER_RADIUSS = [.3]
 
+# Map occupancy information
+size_m = 10         # 10m x 10m size
+resolution_m = 0.01 # 1cm resolution
+size_px = int(size_m/resolution_m) # image is of size: size_px x size_px
+
+# load world image
+
+path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "map.png")
+map_img = cv2.imread(path, 0)
 
 # --------------------------- CONTROL METHODS ------------------------
 
@@ -103,7 +114,41 @@ def baddies_est_test_method(baddies, police):
   pass
 
 def police_est_test_method(police, baddies):
+  xy_raw = police[0].lidar_xy()
   police[0].set_vel(0.1, 0)
+  #print("lidar scan", police[0].lidar_scan()[0])
+  #print("lidar xy", xy_raw[0])
+
+  xy = np.true_divide(xy_raw, resolution_m)
+  xy[:, 1] *= -1
+  xy += size_px/2
+  xy = xy.astype(np.int32)
+
+  robot_PC = []
+  for i, coord in enumerate(xy):
+    if not np.any((coord < 0)|(coord > size_px)) and map_img[coord[1]][coord[0]] == 255:
+      robot_PC.append(xy_raw[i])
+  robot_PC = np.asarray(robot_PC)
+
+  identified = []
+  for i in range(len(robot_PC)):
+    if len(identified) == 0:
+      identified.append(robot_PC[i])
+    else:
+      flag = False
+      for j in range(i):
+        if np.linalg.norm(robot_PC[i] - robot_PC[j]) < 0.3:
+          flag = True
+
+      if not flag:
+        identified.append(robot_PC[i])
+
+  identified = np.asarray(identified)
+
+  if len(identified) > 0:
+    print(identified)
+
+  print("\n\n")
   pass
 
 

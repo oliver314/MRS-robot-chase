@@ -20,11 +20,15 @@ MAX_VELOCITY_POLICE = 0.6
 MAX_VELOCITY_BADDIES = 1
 MAX_ANGULAR_VELOCITY = 0.8
 
+# define laser angles
+laser_range = [0., np.pi / 4., -np.pi / 4., np.pi / 2., -np.pi / 2.]
+lidar_range = np.linspace(-np.pi,np.pi,50,endpoint=False).tolist()
+#lidar_range = [-np.pi/2]
 
 class actor(object):
     def __init__(self, name):
-      self.laser = SimpleLaser(name)
-      self.lidar = SimpleLaser(name)
+      self.laser = SimpleLaser(name,laser_range)
+      self.lidar = SimpleLaser(name,lidar_range)
       self.groundtruth = GroundtruthPose(name)
       self.publisher = rospy.Publisher("/%s/cmd_vel" % name, Twist, queue_size=5)
       self.name = name
@@ -39,9 +43,21 @@ class actor(object):
         time.sleep(0.1)
       return self.laser.measurements
 
+    def lidar_scan(self):
+      while not self.lidar.ready:
+        time.sleep(0.1)
+      return self.lidar.measurements
+
     def set_vel_holonomic(self, x, y):
       u, w = feedback_linearized(self.pose, [x, y], 0.3)
       self.set_vel(u, w)
+
+    def lidar_xy(self):
+      state = self.pose
+      theta = lidar_range + state[2]
+      r = np.asarray(self.lidar_scan())
+      xy = np.transpose(np.array([r*np.cos(theta) + state[0], r*np.sin(theta) + state[1]]))
+      return xy
 
     @property
     def pose(self):
