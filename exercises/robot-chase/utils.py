@@ -5,6 +5,7 @@ from __future__ import print_function
 import numpy as np
 
 
+
 # Laser scan message:
 # http://docs.ros.org/api/sensor_msgs/html/msg/LaserScan.html
 from sensor_msgs.msg import LaserScan

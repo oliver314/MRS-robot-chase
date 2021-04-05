@@ -17,14 +17,14 @@ draw_thickness = int(2 * inflation_m / resolution_m)
 
 
 # Define rectangles here
-# horizontal, vertical, centre x, centre y, angle (degrees)
-rect1 = [8.15, 8.15, 0, 0, 0]
+# horizontal, vertical, centre x, centre y, angle (degrees), fill
+rect1 = [8.15, 8.15, 0, 0, 0, 0]
 
 rect = [rect1]
 
 # Define circles here
-# radius, centre x, centre y
-circle1 = [0.3, 0.3, 0.2]
+# radius, centre x, centre y, fill
+circle1 = [0.3, 0.3, 0.2, 1]
 #circle2 = [0.01, 0, 0]
 
 circle = [circle1]#, circle2]
@@ -40,6 +40,7 @@ for r in rect:
     rx = r[2]
     ry = r[3]
     theta = r[4] * np.pi / 180
+    fill = r[5]
 
     rot = np.array(((np.cos(theta), -np.sin(theta)),
                     (np.sin(theta), np.cos(theta))))
@@ -53,6 +54,9 @@ for r in rect:
     corners = corners.astype(np.int32)
 
     corners = corners.reshape((-1,1,2))
+
+    if fill == 1:
+        cv2.fillPoly(img, [corners], 0)
     cv2.polylines(img, [corners], True, (0, 0, 0), draw_thickness)
 
 # plot circles
@@ -60,9 +64,13 @@ for c in circle:
     cr = c[0]
     ch = c[1]
     cv = c[2]
+    fill = c[3]
 
     centre = np.array([ch/resolution_m + size_px/2,-cv/resolution_m + size_px/2]).astype(np.int32)
     radius = int(cr/resolution_m)
+
+    if fill == 1:
+        cv2.circle(img, tuple(centre), radius, (0, 0, 0), -1)
     cv2.circle(img, tuple(centre), radius, (0, 0, 0), draw_thickness)
     print(centre, radius)
 
