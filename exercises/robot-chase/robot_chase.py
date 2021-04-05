@@ -194,12 +194,15 @@ def run(args):
   else:
     raise NotImplementedError("%s not implemented" % args.mode_police)
 
+  nr_baddies = args.nr_baddies
+  nr_police = args.nr_police
+
   # Update control every 100 ms.
   rate_limiter = rospy.Rate(100)
   idx = 0
 
-  police_names = ["police1", "police2", "police3"]
-  baddies_names = ["baddie1", "baddie2", "baddie3"]
+  police_names = ["police" + str(i+1) for i in range(int(nr_police))]
+  baddies_names = ["baddie" + str(i+1) for i in range(int(nr_baddies))]
 
   baddies = [baddie(name) for name in baddies_names]
   police = [police_car(name) for name in police_names]
@@ -223,6 +226,8 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Runs robot chase')
   parser.add_argument('--mode_baddies', action='store', default='random', help='Method.', choices=['random', 'potential_field', 'est_test'])
   parser.add_argument('--mode_police', action='store', default='closest', help='Method.', choices=['closest', 'potential_field', 'est_test'])
+  parser.add_argument('--nr_baddies', action='store', default=3)
+  parser.add_argument('--nr_police', action='store', default=3)
   args, unknown = parser.parse_known_args()
   try:
     run(args)

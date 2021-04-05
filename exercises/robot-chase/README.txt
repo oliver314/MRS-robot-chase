@@ -1,11 +1,14 @@
 To run Gazebo:
-> roslaunch exercises gazebo_chase.launch
+> roslaunch exercises gazebo_chase.launch nr_baddies:=3 nr_police:=3 world:=simple
 
 To run RViz:
 > roslaunch exercises rviz_chase.launch
 
 To run robot chase:
-> roslaunch exercises robot_chase.launch mode_baddies:=BADDIES_MODE mode_police:=BADDIES_MODE
+> roslaunch exercises robot_chase.launch mode_baddies:=BADDIES_MODE mode_police:=POLICE_MODE nr_baddies:=NR_BADDIES nr_police:=NR_POLICE
+
+e.g.
+roslaunch exercises robot_chase.launch mode_baddies:=potential_field mode_police:=potential_field nr_baddies:=3 nr_police:=3
 
 Modes for Baddies:
 'random', 'potential_field', 'est_test

@@ -5,105 +5,38 @@
     the correct transforms and remapping of topics.
     -->
 
+   <arg name="nr" default="1"/> 
+   <arg name="robot_type"/>
+   <arg name="robot_name_prefix"/>
+   <arg name="pos_x"/>
 
-    <!-- POLICE 1 -->
-    <group ns="police1">
-    <param name="tf_prefix" value="police1" />
+   <!--<param name="robot_position" command="$(find exercises)/robot-chase/random_valid_position.py"/>
+   <arg name="robot_position" default="$(eval python find('exercises')/robot-chase/random_valid_position.py)"/>
+   <arg name="robot_position" default="-x 1 -y 0.5 -z 0"/>-->
+   <arg name="robot_position" default="$(eval '-x ' + str(arg('pos_x')) + ' -y ' + str(arg('nr')/2.) + ' -z 0')"/>
+
+    <group ns="$(eval str(arg('robot_name_prefix')) + str(arg('nr')))">
+    <param name="tf_prefix" value="$(eval str(arg('robot_name_prefix')) + str(arg('nr')))" />
     <include file="$(find exercises)/robot-chase/launch/one_robot.launch" >
-      <arg name="init_pose" value="-x -1 -y 1 -z 0" />
-      <arg name="robot_name"  value="police1" />
-      <arg name="robot_type"  value="burger_blue" />
+      <arg name="init_pose" value="$(arg robot_position)" />
+      <!--arg name="init_pose" value="rosparam get robot_position"-->
+      <arg name="robot_name"  value="$(eval str(arg('robot_name_prefix')) + str(arg('nr')))" />
+      <arg name="robot_type"  value="$(arg robot_type)" />
     </include>
     </group>
 
     <include file="$(find exercises)/robot-chase/launch/state_tf_setup.launch" >
-      <arg name="robot_name"  value="police1" />
-      <arg name="robot_type"  value="burger_blue" />
+      <arg name="robot_name"  value="$(eval str(arg('robot_name_prefix')) + str(arg('nr')))" />
+      <arg name="robot_type"  value="$(arg robot_type)" />
     </include>
 
 
-
-    <!-- POLICE 2 -->
-    <group ns="police2">
-    <param name="tf_prefix" value="police2" />
-    <include file="$(find exercises)/robot-chase/launch/one_robot.launch" >
-      <arg name="init_pose" value="-x 0 -y 1 -z 0" />
-      <arg name="robot_name"  value="police2" />
-      <arg name="robot_type"  value="burger_blue" />
-    </include>
-    </group>
-
-    <include file="$(find exercises)/robot-chase/launch/state_tf_setup.launch" >
-      <arg name="robot_name"  value="police2" />
-      <arg name="robot_type"  value="burger_blue" />
-    </include>
-
-
-
-   <!-- POLICE 3 -->
-    <group ns="police3">
-    <param name="tf_prefix" value="police3" />
-    <include file="$(find exercises)/robot-chase/launch/one_robot.launch" >
-      <arg name="init_pose" value="-x 1 -y 1 -z 0" />
-      <arg name="robot_name"  value="police3" />
-      <arg name="robot_type"  value="burger_blue" />
-    </include>
-    </group>
-
-    <include file="$(find exercises)/robot-chase/launch/state_tf_setup.launch" >
-      <arg name="robot_name"  value="police3" />
-      <arg name="robot_type"  value="burger_blue" />
-    </include>
-
-
-
-    <!-- BADDIE 1 -->
-    <group ns="baddie1">
-    <param name="tf_prefix" value="baddie1" />
-    <include file="$(find exercises)/robot-chase/launch/one_robot.launch" >
-      <arg name="init_pose" value="-x -1 -y -1 -z 0" />
-      <arg name="robot_name"  value="baddie1" />
-      <arg name="robot_type"  value="burger_red" />
-    </include>
-    </group>
-
-    <include file="$(find exercises)/robot-chase/launch/state_tf_setup.launch" >
-      <arg name="robot_name"  value="baddie1" />
-      <arg name="robot_type"  value="burger_red" />
-    </include>
-
-
-
-
-   <!-- BADDIE 2 -->
-    <group ns="baddie2">
-    <param name="tf_prefix" value="baddie2" />
-    <include file="$(find exercises)/robot-chase/launch/one_robot.launch" >
-      <arg name="init_pose" value="-x 0 -y -1 -z 0" />
-      <arg name="robot_name"  value="baddie2" />
-      <arg name="robot_type"  value="burger_red" />
-    </include>
-    </group>
-
-    <include file="$(find exercises)/robot-chase/launch/state_tf_setup.launch" >
-      <arg name="robot_name"  value="baddie2" />
-      <arg name="robot_type"  value="burger_red" />
-    </include>
-
-    <!-- BADDIE 3 -->
-    <group ns="baddie3">
-    <param name="tf_prefix" value="baddie3" />
-    <include file="$(find exercises)/robot-chase/launch/one_robot.launch" >
-      <arg name="init_pose" value="-x 1 -y -1 -z 0" />
-      <arg name="robot_name"  value="baddie3" />
-      <arg name="robot_type"  value="burger_red" />
-    </include>
-    </group>
-
-    <include file="$(find exercises)/robot-chase/launch/state_tf_setup.launch" >
-      <arg name="robot_name"  value="baddie3" />
-      <arg name="robot_type"  value="burger_red" />
-    </include>
+   <include file="$(find exercises)/robot-chase/launch/robots.launch" if="$(eval arg('nr') - 1 > 0)">
+       <arg name="nr" value="$(eval arg('nr') - 1)"/>
+      <arg name="robot_type"  value="$(arg robot_type)" />
+      <arg name="pos_x"  value="$(arg pos_x)" />
+   	<arg name="robot_name_prefix" value="$(arg robot_name_prefix)"/>
+   </include>
 
 
 

@@ -4,9 +4,12 @@
     <arg name="use_gui" default="true"/>
 
     <arg name="model" default="burger" doc="model type [burger, waffle, waffle_pi]"/>
+    <arg name="nr_police" default="3"/> 
+    <arg name="nr_baddies" default="3"/> 
+    <arg name="world" default="simple"/> 
 
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <arg name="world_name" value="$(find exercises)/robot-chase/worlds/simple.world"/>
+        <arg name="world_name" value="$(find exercises)/robot-chase/worlds/$(arg world).world"/>
         <arg name="paused" value="true"/>
         <arg name="use_sim_time" value="true"/>
         <arg name="gui" value="$(arg use_gui)"/>
@@ -17,7 +20,18 @@
     <!-- Ucomment to start the the occupancy grid node if necessary -->
     <!-- <node pkg="tf" type="static_transform_publisher" name="map_broadcaster" args="0 0 0 0 0 0 map occupancy_grid 100" /> -->
 
-    <!-- Launch the robots -->
-    <include file="$(find exercises)/robot-chase/launch/robots.launch"/>
+   <!-- Launch the robots -->
+   <include file="$(find exercises)/robot-chase/launch/robots.launch">
+      <arg name="robot_type"  value="burger_red" />
+      <arg name="robot_name_prefix" value="baddie"/>
+      <arg name="nr" value="$(arg nr_baddies)"/>
+      <arg name="pos_x" value="1"/>
+   </include>
+   <include file="$(find exercises)/robot-chase/launch/robots.launch">
+      <arg name="robot_type"  value="burger_blue" />
+      <arg name="nr" value="$(arg nr_police)"/>
+      <arg name="robot_name_prefix" value="police"/>
+      <arg name="pos_x" value="-1"/>
+   </include>
 
 </launch>
