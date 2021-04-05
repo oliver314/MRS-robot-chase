@@ -16,11 +16,15 @@ inflation_m = 0.15
 draw_thickness = int(2 * inflation_m / resolution_m)
 
 
+# Define the world here (assume rectangle)
+# horizontal, vertical, centre x, centre y, angle=0, fill=-1
+world = [8.15, 8.15, 0, 0, 0, -1]
+
 # Define rectangles here
 # horizontal, vertical, centre x, centre y, angle (degrees), fill
 rect1 = [8.15, 8.15, 0, 0, 0, 0]
 
-rect = [rect1]
+rect = [world, rect1]
 
 # Define circles here
 # radius, centre x, centre y, fill
@@ -31,7 +35,11 @@ circle = [circle1]#, circle2]
 
 
 # Create a white image
-img = 255*np.ones((size_px,size_px,3), np.uint8)
+#img = 255*np.ones((size_px,size_px,3), np.uint8)
+img = np.zeros((size_px,size_px,3), np.uint8)
+
+# Create the world
+
 
 # plot rectangles
 for r in rect:
@@ -57,7 +65,11 @@ for r in rect:
 
     if fill == 1:
         cv2.fillPoly(img, [corners], 0)
-    cv2.polylines(img, [corners], True, (0, 0, 0), draw_thickness)
+        cv2.polylines(img, [corners], True, (0, 0, 0), draw_thickness)
+    elif fill == -1:
+        cv2.fillPoly(img, [corners], (255, 255, 255))
+    else:
+        cv2.polylines(img, [corners], True, (0, 0, 0), draw_thickness)
 
 # plot circles
 for c in circle:
