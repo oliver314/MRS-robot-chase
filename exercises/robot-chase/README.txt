@@ -15,8 +15,7 @@ Modes for Police:
 
 Folders:roslaunch exercises robot_chase.launch mode_baddies:=BADDIES_MODE mode_police:=BADDIES_MODE
 
-worlds - simple.world, loads scene and physics
-models - What should be models is actually linked to models in part 1. Modify worlds in part1/models. model.config loads model.sdf where walls and obstacles are specified
+worlds - simple.world, loads scene and physics. Contains folders with models. model.config loads model.sdf where walls and obstacles are specified
 launch - gazebo_chase.launch:
 	    - includes file empty_world.launch with arg simple.world (/opt/ros/kinetic/gazebo_ros/launch)
 		- sets robot_description

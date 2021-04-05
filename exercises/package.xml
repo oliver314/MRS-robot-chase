@@ -45,7 +45,7 @@
 
   <exec_depend>gazebo</exec_depend>
   <export>
-    <gazebo_ros gazebo_model_path="${prefix}/part1/ros/models"/>
+    <gazebo_ros gazebo_model_path="${prefix}/robot-chase/worlds"/>
   </export>
 </package>
 

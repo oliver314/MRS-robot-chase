@@ -207,7 +207,7 @@ def run(args):
   while not rospy.is_shutdown():
 
     baddies_method(baddies, police)
-    police_method(police, baddie)
+    police_method(police, baddies)
 
     check_if_any_caught(police, baddies)
 
