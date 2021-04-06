@@ -12,7 +12,7 @@ import os
 
 from robots import baddie, police_car
 from utils import get_repulsive_field_from_obstacles, normalize
-
+from rrt import rrt_wrapper
 
 DISTANCE_CONSIDERED_CAUGHT = 0.25
 WALL_OFFSET = 4.
@@ -23,10 +23,10 @@ CYLINDER_RADIUSS = [.3]
 size_m = 10         # 10m x 10m size
 resolution_m = 0.01 # 1cm resolution
 size_px = int(size_m/resolution_m) # image is of size: size_px x size_px
+MAP_NAME = "simple_world_big"
 
 # load world image
-
-path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "map.png")
+path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worlds/'+MAP_NAME+'/map.png')
 map_img = cv2.imread(path, 0)
 
 # --------------------------- CONTROL METHODS ------------------------
@@ -64,6 +64,20 @@ def police_closest_method(police, baddies):
         min_distance = np.linalg.norm(police_car.pose[:2] - baddie.pose[:2])
         closest_baddie = baddie
     police_car.set_vel_holonomic(*(-police_car.pose[:2] + closest_baddie.pose[:2]))
+
+rrt_wrap = rrt_wrapper(size_m, resolution_m, MAP_NAME)
+def police_closest_rrt_method(police, baddies):
+  '''every police car follows the baddie it is closest to, trajectory via rrt, thus now uses obstacle avoidance'''
+  for police_car in police:
+    closest_baddie = None 
+    min_distance = np.inf
+    for baddie in baddies:
+      if np.linalg.norm(police_car.pose[:2] - baddie.pose[:2]) < min_distance and not baddie.caught:
+        min_distance = np.linalg.norm(police_car.pose[:2] - baddie.pose[:2])
+        closest_baddie = baddie
+    global rrt_wrap
+    v = rrt_wrap.rrt_next_vel(police_car, closest_baddie.pose[:2])
+    police_car.set_vel_holonomic(*v)
     
 ##############################################
 #### Potential field method ##################
@@ -71,7 +85,7 @@ def police_closest_method(police, baddies):
 
 def baddies_pot_field_method(baddies, police):
   '''potential field method for baddies: assumes baddies know location of police'''
-  P_gain_repulsive = 3
+  P_gain_repulsive = 2.5
   rep_cutoff_distance = 2
   for baddie in baddies:
     # Have police cars as obstacles
@@ -187,6 +201,8 @@ def run(args):
 
   if args.mode_police == "closest":
     police_method = police_closest_method
+  elif args.mode_police == "closest_rrt":
+    police_method = police_closest_rrt_method
   elif args.mode_police == "potential_field":
     police_method = police_pot_field_method
   elif args.mode_police == "est_test":
@@ -225,7 +241,7 @@ def run(args):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Runs robot chase')
   parser.add_argument('--mode_baddies', action='store', default='random', help='Method.', choices=['random', 'potential_field', 'est_test'])
-  parser.add_argument('--mode_police', action='store', default='closest', help='Method.', choices=['closest', 'potential_field', 'est_test'])
+  parser.add_argument('--mode_police', action='store', default='closest', help='Method.', choices=['closest', 'closest_rrt', 'potential_field', 'est_test'])
   parser.add_argument('--nr_baddies', action='store', default=3)
   parser.add_argument('--nr_police', action='store', default=3)
   args, unknown = parser.parse_known_args()
