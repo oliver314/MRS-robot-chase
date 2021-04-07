@@ -1,6 +1,9 @@
 To run Gazebo:
 > roslaunch exercises gazebo_chase.launch nr_baddies:=3 nr_police:=3 world:=simple
 
+Worlds:
+'simple', 'cluttered'
+
 To run RViz:
 > roslaunch exercises rviz_chase.launch
 
