@@ -12,7 +12,7 @@ resolution_m = 0.01 # 1cm resolution
 size_px = int(size_m/resolution_m) # image is of size: size_px x size_px
 
 # set inflation of lines. (centre to edge inflation distance)
-inflation_m = 0.15
+inflation_m = 0.3
 draw_thickness = int(2 * inflation_m / resolution_m)
 
 
@@ -87,7 +87,7 @@ for c in circle:
     print(centre, radius)
 
 # Sanity check for any points
-#cv2.circle(img, (506,468), radius=0, color=(0, 0, 255), thickness=-1)
+#cv2.circle(img, (629, 113), radius=10, color=(0, 0, 255), thickness=-1)
 
 cv2.imshow('image',img)
 cv2.waitKey(0)

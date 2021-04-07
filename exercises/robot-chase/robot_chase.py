@@ -11,8 +11,9 @@ import cv2
 import os
 
 from robots import baddie, police_car
-from utils import get_repulsive_field_from_obstacles, normalize
+from utils import get_repulsive_field_from_obstacles, normalize, Particle, update_particles
 
+from sensor_msgs.msg import PointCloud
 
 DISTANCE_CONSIDERED_CAUGHT = 0.25
 WALL_OFFSET = 4.
@@ -24,10 +25,16 @@ size_m = 10         # 10m x 10m size
 resolution_m = 0.01 # 1cm resolution
 size_px = int(size_m/resolution_m) # image is of size: size_px x size_px
 
-# load world image
+# Limits (in meters) for x and y in the environment
+xlim = [-4, 4]
+ylim = [-4, 4]
 
+# load world image
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "map.png")
 map_img = cv2.imread(path, 0)
+
+# Lidar cutoff
+lidar_cutoff = 3
 
 # --------------------------- CONTROL METHODS ------------------------
 
@@ -114,8 +121,22 @@ def baddies_est_test_method(baddies, police):
   pass
 
 def police_est_test_method(police, baddies):
-  xy_raw = police[0].lidar_xy()
-  police[0].set_vel(0.1, 0)
+  # move a litte bit
+  for police_car in police:
+    if police_car.pose[0]<-0.6:
+      police_car.set_vel(0.1, 0)
+    else:
+      police_car.set_vel(0, 0)
+
+
+def baddies_from_lidar(police):
+  xy_raw1 = police[0].lidar_xy()
+  xy_raw2 = police[1].lidar_xy()
+  xy_raw3 = police[2].lidar_xy()
+
+  xy_raw = np.vstack((xy_raw1, xy_raw2, xy_raw3))
+  #xy_raw = xy_raw1
+  #police[0].set_vel(0.1, 0)
   #print("lidar scan", police[0].lidar_scan()[0])
   #print("lidar xy", xy_raw[0])
 
@@ -137,23 +158,33 @@ def police_est_test_method(police, baddies):
     else:
       flag = False
       for j in range(i):
-        if np.linalg.norm(robot_PC[i] - robot_PC[j]) < 0.3:
+        if np.linalg.norm(robot_PC[i] - robot_PC[j]) < 0.25:
           flag = True
 
       if not flag:
         identified.append(robot_PC[i])
 
-  identified = np.asarray(identified)
+  # Exclude any positions that corresponds to your fellow officers from the list
+  baddies_identified = []
+  for est in identified:
+    is_police = False
+    for police_car in police:
+      if np.linalg.norm(police_car.pose[:2] - est) < 0.2:
+        is_police = True
+        break
 
-  if len(identified) > 0:
-    print(identified)
+    if not is_police:
+      baddies_identified.append(est)
 
+  #print(xy_raw)
+  #print(np.asarray(identified))
+  print(np.asarray(baddies_identified))
   print("\n\n")
-  pass
+
+  return baddies_identified
 
 
 # ----------------------------SUPPORT FUNCTIONS ----------------------------
-
 
 def check_if_any_caught(police, baddies):
   for police_car in police:
@@ -194,6 +225,15 @@ def run(args):
   else:
     raise NotImplementedError("%s not implemented" % args.mode_police)
 
+  # Particles init
+  particle_publisher = rospy.Publisher('/particles', PointCloud, queue_size=1)
+  num_particles = 200
+  particles = [Particle(xlim, ylim, map_img, lidar_cutoff) for _ in range(num_particles)]
+
+  for i, p in enumerate(particles):
+    p.set_pose(1.5, (i+1)*0.5)
+    if i == 2:
+      break
   nr_baddies = args.nr_baddies
   nr_police = args.nr_police
 
@@ -207,6 +247,7 @@ def run(args):
   baddies = [baddie(name) for name in baddies_names]
   police = [police_car(name) for name in police_names]
 
+  frame_id = 0
   while not rospy.is_shutdown():
 
     baddies_method(baddies, police)
@@ -219,8 +260,15 @@ def run(args):
       break
     idx += 1
 
-    rate_limiter.sleep()
+    baddies_list = baddies_from_lidar(police)
+    # Move, compute weight, resample particles
+    particles, particle_msg = update_particles(particles, num_particles, frame_id, police, baddies_list)
 
+    # publish particles
+    particle_publisher.publish(particle_msg)
+
+    rate_limiter.sleep()
+    frame_id += 1
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Runs robot chase')

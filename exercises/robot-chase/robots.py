@@ -22,7 +22,7 @@ MAX_ANGULAR_VELOCITY = 0.8
 
 # define laser angles
 laser_range = [0., np.pi / 4., -np.pi / 4., np.pi / 2., -np.pi / 2.]
-lidar_range = np.linspace(-np.pi,np.pi,50,endpoint=False).tolist()
+lidar_range = np.linspace(-np.pi,np.pi,20,endpoint=False).tolist()
 #lidar_range = [-np.pi/2]
 
 class actor(object):
