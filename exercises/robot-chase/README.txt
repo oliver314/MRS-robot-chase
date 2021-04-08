@@ -14,12 +14,11 @@ e.g.
 roslaunch exercises robot_chase.launch mode_baddies:=potential_field mode_police:=potential_field nr_baddies:=3 nr_police:=3
 
 Modes for Baddies:
-'random', 'potential_field', 'est_test
+'random', 'potential_field'
 
 Modes for Police:
-'closest', 'potential_field', 'est_test'
+'closest', 'potential_field'
 
-Folders:roslaunch exercises robot_chase.launch mode_baddies:=BADDIES_MODE mode_police:=BADDIES_MODE
 
 worlds - simple.world, loads scene and physics. Contains folders with models. model.config loads model.sdf where walls and obstacles are specified
 launch - gazebo_chase.launch:

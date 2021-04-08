@@ -15,14 +15,14 @@ map = cv2.imread(path, 0)
 
 def generate_random_pose(img, xlim, ylim):
   xrng = abs(xlim[1] - xlim[0])
-  xmid = (xlim[1] + xlim[0])/2
+  xmin = min(xlim[1] + xlim[0])
 
   yrng = abs(ylim[1] - ylim[0])
-  ymid = (ylim[1] + ylim[0]) / 2
+  ymin = min(ylim[1] + ylim[0])
 
   while 1:
-    x = xrng * random.random() + xmid
-    y = yrng * random.random() + ymid
+    x = xrng * random.random() + xmin
+    y = yrng * random.random() + ymin
 
     pose = np.array([(x/resolution_m) + size_px/2, (-y/resolution_m) + size_px/2])
     pose = pose.astype(np.int32)

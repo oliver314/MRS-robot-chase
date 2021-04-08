@@ -9,9 +9,13 @@ import numpy as np
 import rospy
 import cv2
 import os
+import matplotlib.pyplot as plt
 
 from robots import baddie, police_car
-from utils import get_repulsive_field_from_obstacles, normalize, Particle, update_particles
+from utils import get_repulsive_field_from_obstacles, normalize
+from particles_utils import Particle, update_particles, world_to_pixel, \
+                            obstructed, baddies_list_LoS, baddies_list_lidar, \
+                            sort_baddies
 
 from sensor_msgs.msg import PointCloud
 from rrt import rrt_wrapper
@@ -36,8 +40,6 @@ ylim = [-4, 4]
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worlds/'+MAP_NAME+'/map.png')
 map_img = cv2.imread(path, 0)
 
-# Lidar cutoff
-lidar_cutoff = 3
 
 # --------------------------- CONTROL METHODS ------------------------
 
@@ -130,77 +132,6 @@ def police_pot_field_method(police, baddies):
     police_car.set_vel_holonomic(*v)
 
 
-##############################################
-#### Testing for estimation stuff ############
-##############################################
-
-def baddies_est_test_method(baddies, police):
-  pass
-
-def police_est_test_method(police, baddies):
-  # move a litte bit
-  for police_car in police:
-    if police_car.pose[0]<-0.6:
-      police_car.set_vel(0.1, 0)
-    else:
-      police_car.set_vel(0, 0)
-
-
-def baddies_from_lidar(police):
-  xy_raw1 = police[0].lidar_xy()
-  xy_raw2 = police[1].lidar_xy()
-  xy_raw3 = police[2].lidar_xy()
-
-  xy_raw = np.vstack((xy_raw1, xy_raw2, xy_raw3))
-  #xy_raw = xy_raw1
-  #police[0].set_vel(0.1, 0)
-  #print("lidar scan", police[0].lidar_scan()[0])
-  #print("lidar xy", xy_raw[0])
-
-  xy = np.true_divide(xy_raw, resolution_m)
-  xy[:, 1] *= -1
-  xy += size_px/2
-  xy = xy.astype(np.int32)
-
-  robot_PC = []
-  for i, coord in enumerate(xy):
-    if not np.any((coord < 0)|(coord > size_px)) and map_img[coord[1]][coord[0]] == 255:
-      robot_PC.append(xy_raw[i])
-  robot_PC = np.asarray(robot_PC)
-
-  identified = []
-  for i in range(len(robot_PC)):
-    if len(identified) == 0:
-      identified.append(robot_PC[i])
-    else:
-      flag = False
-      for j in range(i):
-        if np.linalg.norm(robot_PC[i] - robot_PC[j]) < 0.25:
-          flag = True
-
-      if not flag:
-        identified.append(robot_PC[i])
-
-  # Exclude any positions that corresponds to your fellow officers from the list
-  baddies_identified = []
-  for est in identified:
-    is_police = False
-    for police_car in police:
-      if np.linalg.norm(police_car.pose[:2] - est) < 0.2:
-        is_police = True
-        break
-
-    if not is_police:
-      baddies_identified.append(est)
-
-  #print(xy_raw)
-  #print(np.asarray(identified))
-  print(np.asarray(baddies_identified))
-  print("\n\n")
-
-  return baddies_identified
-
-
 # ----------------------------SUPPORT FUNCTIONS ----------------------------
 
 def check_if_any_caught(police, baddies):
@@ -224,12 +155,11 @@ def check_if_all_caught(police, baddies):
 
 def run(args):
   rospy.init_node('robot_chase')
+
   if args.mode_baddies == "random":
     baddies_method = baddies_random_movement_method
   elif args.mode_baddies == "potential_field":
     baddies_method = baddies_pot_field_method
-  elif args.mode_baddies == "est_test":
-    baddies_method = baddies_est_test_method
   else:
     raise NotImplementedError("%s not implemented" % args.mode_baddies)
 
@@ -239,22 +169,33 @@ def run(args):
     police_method = police_closest_rrt_method
   elif args.mode_police == "potential_field":
     police_method = police_pot_field_method
-  elif args.mode_police == "est_test":
-    police_method = police_est_test_method
   else:
     raise NotImplementedError("%s not implemented" % args.mode_police)
 
-  # Particles init
-  particle_publisher = rospy.Publisher('/particles', PointCloud, queue_size=1)
-  num_particles = 200
-  particles = [Particle(xlim, ylim, map_img, lidar_cutoff) for _ in range(num_particles)]
-
-  for i, p in enumerate(particles):
-    p.set_pose(1.5, (i+1)*0.5)
-    if i == 2:
-      break
   nr_baddies = args.nr_baddies
   nr_police = args.nr_police
+
+
+  ##### Particles and estimation - Setup START
+
+  # number of particles assigned to each baddie
+  num_particles = 20
+  # init the list of particle publishers and particles for each baddie
+  particle_publisher = []
+  particles = []
+  for i in range(int(nr_baddies)):
+    particle_publisher.append(rospy.Publisher('/particles'+str(i+1), PointCloud, queue_size=1))
+    particles.append([Particle(xlim, ylim, map_img) for _ in range(num_particles)])
+
+  # init baddies measured position list
+  measured_baddie_position = [None, None, None]
+
+  # True: use line of sight to estimate baddie position
+  # False: use lidar to estimate baddie position
+  line_of_sight = False
+
+  ##### Particles and estimation - Setup END
+
 
   # Update control every 100 ms.
   rate_limiter = rospy.Rate(100)
@@ -266,7 +207,12 @@ def run(args):
   baddies = [baddie(name) for name in baddies_names]
   police = [police_car(name) for name in police_names]
 
-  frame_id = 0
+  # live plotting setup
+  plt.ion()
+  plt.show()
+
+
+  # Main loop
   while not rospy.is_shutdown():
 
     baddies_method(baddies, police)
@@ -274,20 +220,27 @@ def run(args):
 
     check_if_any_caught(police, baddies)
 
+    # Locate baddie positions and assign them to three baddie1, baddie2, baddie3
+    if line_of_sight:
+      measured_baddie_position = baddies_list_LoS(police, baddies, map_img)
+    else:
+      temp_list = baddies_list_lidar(police, map_img, live_plot=True)
+      measured_baddie_position = sort_baddies(temp_list, measured_baddie_position)
+
+
+    # Move, compute weight, resample particles
+    for i, baddie_loc in enumerate(measured_baddie_position):
+      particles[i], particle_msg = update_particles(particles[i], num_particles, idx, police, baddies[i], baddie_loc)
+
+      # publish particles
+      particle_publisher[i].publish(particle_msg)
+
     if check_if_all_caught(police, baddies):
       print("Done in iteration %d" % idx)
       break
     idx += 1
 
-    baddies_list = baddies_from_lidar(police)
-    # Move, compute weight, resample particles
-    particles, particle_msg = update_particles(particles, num_particles, frame_id, police, baddies_list)
-
-    # publish particles
-    particle_publisher.publish(particle_msg)
-
     rate_limiter.sleep()
-    frame_id += 1
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Runs robot chase')
