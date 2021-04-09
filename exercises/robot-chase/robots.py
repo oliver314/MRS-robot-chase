@@ -89,7 +89,7 @@ class baddie(actor):
       if self.access_to_gt_pose:
         return self._pose()
       else:
-        return self.est_pose
+        return np.array([self.est_pose[0], self.est_pose[1], 0])
 
 
 

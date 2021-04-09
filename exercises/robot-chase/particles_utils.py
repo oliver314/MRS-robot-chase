@@ -263,8 +263,8 @@ def baddies_list_LoS(police, baddies, map_img):
 
   for i, baddie in enumerate(baddies):
     for police_car in police:
-      if not obstructed(police_car.pose[:2], baddie.pose[:2], map_img):
-        baddies_identified[i] = baddie.pose[:2]
+      if not obstructed(police_car.pose[:2], baddie._pose()[:2], map_img):
+        baddies_identified[i] = baddie._pose()[:2]
         break
 
   return baddies_identified
