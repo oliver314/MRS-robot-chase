@@ -69,7 +69,7 @@ class Particle(object):
     pose = pose.astype(np.int32)
 
     # Check if that location is valid
-    if not np.any((pose < 0) | (pose > size_px)):
+    if not np.any((pose < 0) | (pose > size_px-1)):
       if self.map[pose[1]][pose[0]] == 255:
         valid = True
 
@@ -89,8 +89,7 @@ class Particle(object):
     # For a small probability the particles can be repositioned any valid location in the arena
 
     # 1% chance
-
-    if np.random.rand() < 0.001:
+    if np.random.rand() < 0.01:
       self.sample_random_pose()
 
     pass
@@ -144,6 +143,7 @@ class Particle(object):
 # Functions
 ###############
 
+# move, compute weight, resample
 def update_particles(particles, num_particles, frame_id, police, baddie_loc):
 
   total_weight = 0.
@@ -181,6 +181,8 @@ def update_particles(particles, num_particles, frame_id, police, baddie_loc):
 
   for i, p in enumerate(particles):
     pt = Point32()
+
+    # Move particles out of the rviz screen (simply for visualisation purposes)
     if p.caught:
       pt.x = 100
       pt.y = 100
@@ -191,12 +193,13 @@ def update_particles(particles, num_particles, frame_id, police, baddie_loc):
     particle_msg.points.append(pt)
     intensity_channel.values.append(p.weight)
 
-  # Calculate mean vector and covariance matrix
+  # Compute mean vector
   mu = np.array([0.,0.])
   for p in particles:
     mu[0] += p.pose[0] / num_particles
     mu[1] += p.pose[1] / num_particles
 
+  # Compute covariance matrix
   sigma = np.array([[0.,0.],[0.,0.]])
   for p in particles:
     sigma[0][0] += (p.pose[0] - mu[0]) ** 2 / num_particles
@@ -206,17 +209,17 @@ def update_particles(particles, num_particles, frame_id, police, baddie_loc):
 
   return particles, particle_msg, mu, sigma
 
-# Convert a single point from world coordinates to pixel coordinates
-def world_to_pixel(point):
-  xy = np.true_divide(point, resolution_m)
-  xy[1] *= -1
-  xy += size_px / 2
-  xy = xy.astype(np.int32)
-  return xy
-
 # Returns true if a line between two points in space are obstructed by an obstacle
 # the obstacle is based on the map image
 def obstructed(point1, point2, map_img):
+  # Convert a single point from world coordinates to pixel coordinates
+  def world_to_pixel(point):
+    xy = np.true_divide(point, resolution_m)
+    xy[1] *= -1
+    xy += size_px / 2
+    xy = xy.astype(np.int32)
+    return xy
+
   p1_px = world_to_pixel(point1)
   p2_px = world_to_pixel(point2)
   obstructed = False
@@ -262,7 +265,6 @@ def obstructed(point1, point2, map_img):
       x += grad
   return obstructed
 
-
 # Create a list of points which represents baddies which the police can see on its sight
 def baddies_list_LoS(police, baddies, map_img):
   baddies_identified = [None] * len(baddies)
@@ -276,7 +278,7 @@ def baddies_list_LoS(police, baddies, map_img):
   return baddies_identified
 
 # Create a list of points which represents baddies which the police can see via a Lidar
-def baddies_list_lidar(police, map_img, live_plot = True):
+def baddies_list_lidar(police, baddies, map_img, live_plot = True):
 
   baddies_identified = []
 
@@ -318,14 +320,20 @@ def baddies_list_lidar(police, map_img, live_plot = True):
 
 
   # Exclude any positions that corresponds to your fellow officers from the list
+  # Exclude any positions that corresponds to baddies you already found
   for est in identified:
-    is_police = False
+    keep = True
     for police_car in police:
       if np.linalg.norm(police_car.pose[:2] - est) < 0.2:
-        is_police = True
+        keep = False
         break
 
-    if not is_police:
+    for baddie in baddies:
+      if baddie.caught and np.linalg.norm(baddie.gt_pose[:2] - est) < 0.2:
+        keep = False
+        break
+
+    if keep:
       baddies_identified.append(est)
 
   if np.shape(detected_points)[0] > 0 and live_plot:
@@ -341,80 +349,125 @@ def baddies_list_lidar(police, map_img, live_plot = True):
   return baddies_identified
 
 # Link between previous assignment to baddies and new measurements
-def sort_baddies(temp_list, baddies_list):
-  output_list = [None, None, None]
+def sort_baddies(curr_measurement, prev_measurement, num_baddies):
+  output_list = [None] * num_baddies
 
   # If no baddies were detected in the first place
-  if len(temp_list) == 0:
+  if len(curr_measurement) == 0:
     return output_list
 
   # If the previous baddies list do not contain any baddies
-  if all(baddie is None for baddie in baddies_list):
-    for i in range(len(temp_list)):
-      output_list[i] = temp_list[i]
+  if all(measurement is None for measurement in prev_measurement):
+    for i in range(len(curr_measurement)):
+      output_list[i] = curr_measurement[i]
     return output_list
 
   # one or more baddies were detected
-  # The previous list contains some information
+  # AND the previous list contains some information
+
+  # Go through the baddies the previous measurement list and compared length with current measurement
   recorded = []
-  for n in range(len(temp_list)):
-    baddie = baddies_list[n]
-    if baddie is not None:
+  for n in range(len(curr_measurement)):
+    measurement = prev_measurement[n]
+    if measurement is not None:
       closest = [10000., None]
-      for i, pos in enumerate(temp_list):
-        dist = np.linalg.norm(baddie - pos)
+      for i, curr_pos in enumerate(curr_measurement):
+        dist = np.linalg.norm(measurement - curr_pos)
         if dist < closest[0]:
           closest[0] = dist
           closest[1] = i
-      output_list[n] = temp_list[closest[1]]
+
+      # Do not duplicate the current measurement
+      if closest[1] not in recorded:
+        output_list[n] = curr_measurement[closest[1]]
       recorded.append(closest[1])
 
   # When there are more items in temp_list compared to baddies_list
-  for i, pos in enumerate(temp_list):
+  for i, pos in enumerate(curr_measurement):
     # if this particular position has not been recorded in the output list
-    if all(index != i for index in recorded):
+    if i not in recorded:
       for j, value in enumerate(output_list):
         if value is None:
           output_list[j] = pos
           recorded.append(i)
           break
 
-  return output_list
+  return np.array(output_list)
 
-
-def check_baddies_caught(particles, baddies, line_of_sight):
-  if line_of_sight:
+# Check if baddies have been caught. Then set the appropriate particle to caught status
+def check_baddies_caught(particle_list, baddies, line_of_sight):
     for i in range(len(baddies)):
-      if baddies[i].caught and not particles[i][0].caught:
-        for p in particles[i]:
-          p.caught = True
-  else:
-    pass
+
+      # If we are using line of sight, we know which particles mark as caught
+      if line_of_sight:
+        if baddies[i].caught and not particle_list[i][0].caught:
+          for p in particle_list[i]:
+            p.caught = True
+
+      # If we are using lidar, we need to check for the temp_caught_flag in baddies
+      # This flag will be lowered once this loop is done
+      else:
+        for j, baddie in enumerate(baddies):
+          if baddie.temp_caught_flag:
+            print("Particle set", j+1, " was eliminated")
+
+            # now set the correct particle set's caught status to TRUE
+            num_particle_list = len(particle_list)
+            for index in range(num_particle_list):
+              if not particle_list[num_particle_list-1-index][0].caught:
+                for p in particle_list[num_particle_list-1-index]:
+                  p.caught = True
+                break
+            baddie.temp_caught_flag = False
+
+# Function to take care of all of the particle action
+def get_baddies_estimation(police, baddies, prev_baddie_measurement, line_of_sight, map_img, particle_list, particle_publisher, num_particles, idx, live_plot):
+
+    ## Sanity check if number of measurement points is less than or equal to number of baddies
+    for i in range(3):
+      if len(prev_baddie_measurement) > len(baddies):
+        for i, xy_point in enumerate(prev_baddie_measurement):
+          if abs(xy_point[0]) > 3.7 or abs(xy_point[1]) > 3.7:
+            prev_baddie_measurement.pop(i)
+            break
+
+    # if still too long just truncate it
+    if len(prev_baddie_measurement) > len(baddies):
+      prev_baddie_measurement = prev_baddie_measurement[:len(baddies)]
 
 
-def get_baddies_estimation(police, baddies, prev_baddie_measurement,line_of_sight, map_img, particles, particle_publisher, num_particles, idx, live_plot):
-
+    # Obtain raw measurement of the baddies' position
     if line_of_sight:
       curr_baddie_measurement = baddies_list_LoS(police, baddies, map_img)
     else:
-      temp_list = baddies_list_lidar(police, map_img, live_plot=live_plot)
-      curr_baddie_measurement = sort_baddies(temp_list, prev_baddie_measurement)
+      raw_measurement = baddies_list_lidar(police, baddies, map_img, live_plot=live_plot)
+      curr_baddie_measurement = sort_baddies(raw_measurement, prev_baddie_measurement, len(baddies))
 
-    # Move, compute weight, resample particles
-    for i, baddie_loc in enumerate(curr_baddie_measurement):
+      '''
+      print("raw baddie measurement")
+      for i in range(len(curr_baddie_measurement)):
+        print(curr_baddie_measurement[i])
+      print('\n')
+      '''
 
-      # Check if the baddies are actually caught
-      # - in which case disable particles and move them out of sight
-      check_baddies_caught(particles, baddies, line_of_sight)
+    # Check if the baddies are actually caught
+    # - in which case mark the appropriate particles as "caught"
+    check_baddies_caught(particle_list, baddies, line_of_sight)
 
-      particles[i], particle_msg, mu, sigma = update_particles(particles[i], num_particles, idx, police, baddie_loc)
+    # Move, compute weight, resample particles, publish to ros, set baddies position
+    for i, baddie_measurement in enumerate(curr_baddie_measurement):
 
-      # Set the estimated position and variance of each baddie
-      if not baddies[i].caught:
-        baddies[i].set_mu_sigma(mu, sigma)
+      # move, compute weight, resample particles
+      # returns, updated list of particles, the appropriate ROS message,
+      # the mean vector of the baddie and cov matrix
+      particle_list[i], particle_msg, mu, sigma = update_particles(particle_list[i], num_particles, idx, police, baddie_measurement)
 
       # publish particles
       #check_baddies_caught(particles, baddies, line_of_sight)
       particle_publisher[i].publish(particle_msg)
+
+      # Set the estimated position and variance of each baddie
+      if not baddies[i].caught:
+        baddies[i].set_mu_sigma(mu, sigma)
 
     return curr_baddie_measurement

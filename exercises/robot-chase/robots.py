@@ -42,11 +42,15 @@ class actor(object):
       return self.laser.measurements
 
     def set_vel_holonomic(self, x, y):
-      u, w = feedback_linearized(self.pose, [x, y], 0.3)
+      u, w = feedback_linearized(self.gt_pose, [x, y], 0.3)
       self.set_vel(u, w)
 
     @property
     def pose(self):
+        return self._pose()
+
+    @property
+    def gt_pose(self):
         return self._pose()
 
 
@@ -56,6 +60,7 @@ class baddie(actor):
     self.est_pose = np.array([100] * 2)
     self.est_variance = np.array([[100] * 2,[100] * 2])
     self.access_to_gt_pose = access_to_gt_pose
+    self.temp_caught_flag = False
     super(baddie, self).__init__(name)
 
   def set_vel(self, u, w):
@@ -91,9 +96,6 @@ class baddie(actor):
       else:
         return np.array([self.est_pose[0], self.est_pose[1], 0])
 
-  @property
-  def gt_pose(self):
-      return self._pose()
 
 class police_car(actor):
   def __init__(self, name):
@@ -123,3 +125,4 @@ class police_car(actor):
   @property
   def lidar_xy(self):
     return self.xy
+

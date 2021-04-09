@@ -135,8 +135,11 @@ def police_pot_field_method(police, baddies):
 def check_if_any_caught(police, baddies):
   for police_car in police:
     for baddie in baddies:
-      if np.linalg.norm(police_car.pose[:2] - baddie.gt_pose[:2]) < DISTANCE_CONSIDERED_CAUGHT:
+      if not baddie.caught and np.linalg.norm(police_car.pose[:2] - baddie.gt_pose[:2]) < DISTANCE_CONSIDERED_CAUGHT:
         baddie.caught = True
+        baddie.temp_caught_flag = True
+        baddie.set_vel_holonomic(0,0)
+
 
 def check_if_all_caught(police, baddies):
   for baddie in baddies:
@@ -187,12 +190,12 @@ def run(args):
     particles.append([Particle(xlim, ylim, map_img) for _ in range(num_particles)])
 
   # init baddies measured position list
-  prev_baddie_measurement = [None, None, None]
+  prev_baddie_measurement = [None] * int(nr_baddies)
 
-  live_plot = True
+  # Live plot of lidar measurements if you are using lidar to estimate baddies positions
+  live_plot = False
 
   ##### Particles and estimation - Setup END
-
 
   # Update control every 100 ms.
   rate_limiter = rospy.Rate(100)
@@ -209,7 +212,6 @@ def run(args):
     plt.ion()
     plt.show()
 
-
   # Main loop
   while not rospy.is_shutdown():
 
@@ -223,10 +225,9 @@ def run(args):
       prev_baddie_measurement = get_baddies_estimation(police, baddies, prev_baddie_measurement, mode_estimator=='line_of_sight', map_img,
                                                        particles, particle_publisher, num_particles, idx, live_plot)
 
-    # Print baddie positions
-    #print("baddie1: ", baddies[0].pose)
-    #print("baddie2: ", baddies[1].pose)
-    #print("baddie3: ", baddies[2].pose)
+    # Print baddie status for debugging purposes
+    #for i in range(len(baddies)):
+    #  print(baddies[i].name," - pose: ", baddies[i].pose, " caught: ", baddies[i].caught)
     #print("\n\n")
 
     if check_if_all_caught(police, baddies):
