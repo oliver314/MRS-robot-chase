@@ -428,17 +428,6 @@ def draw_solution(start_node, final_node=None):
       v = v.parent
 
 
-
-def re_evaluate_path_thread(start_pose, target_pose, police_car, current_path, called_idx, occupancy_grid):
-    start_node, final_node = rrt(start_pose, target_pose, occupancy_grid)
-    if final_node is None:
-      final_node = Node(np.array([target_pose[0], target_pose[1], 0]))
-      final_node.parent = Node(start_pose)
-
-    current_path[police_car.name] = get_path(final_node)
-    called_idx[police_car.name] = 0
-    print("Updating trajectory with target " + str(target_pose) + " for " + police_car.name)
-
 class rrt_wrapper:
   def __init__(self, size_px, resolution, map_name="simple_world_big"):
     # Load map.
@@ -457,8 +446,29 @@ class rrt_wrapper:
     self.current_path = {}
     self.called_idx = {}
     self.rrt_thread = {}
-    #plt.ion()
-    #plt.show()
+    self.draw = False
+    if self.draw:
+      plt.ion()
+      plt.show()
+
+
+  def re_evaluate_path_thread(self, start_pose, target_pose, police_car, current_path, called_idx, occupancy_grid):
+      start_node, final_node = rrt(start_pose, target_pose, occupancy_grid)
+      if final_node is None:
+        final_node = Node(np.array([target_pose[0], target_pose[1], 0]))
+        final_node.parent = Node(start_pose)
+
+      current_path[police_car.name] = get_path(final_node)
+      called_idx[police_car.name] = 0
+
+      # only works if not in thread
+      if self.draw:
+        draw_solution(start_node, final_node)
+        plt.title(police_car.name)
+        plt.draw()
+        plt.pause(0.001)
+
+      #print("Updating trajectory with target " + str(target_pose) + " for " + police_car.name)
 
 
   def rrt_next_vel(self, police_car, target_pose):
@@ -469,13 +479,8 @@ class rrt_wrapper:
         #self.occupancy_grid.draw()
         if police_car.name not in self.rrt_thread or not self.rrt_thread[police_car.name].is_alive():
 
-          #draw_solution(start_node, final_node)
-          #plt.title(police_car.name)
-          #plt.draw()
-          #plt.pause(0.001)
-
           # in a thread so that velocity is continously updated, even as we recalculate trajectory (and robot doesn t execute last velocity setting during that whole time)
-          self.rrt_thread[police_car.name] = threading.Thread(target=re_evaluate_path_thread, args=(start_pose, target_pose, police_car, self.current_path, self.called_idx, self.occupancy_grid))
+          self.rrt_thread[police_car.name] = threading.Thread(target=self.re_evaluate_path_thread, args=(start_pose, target_pose, police_car, self.current_path, self.called_idx, self.occupancy_grid))
           self.rrt_thread[police_car.name].start()
           #print("RRT thread started!")
           if police_car.name not in self.current_path or len(self.current_path[police_car.name]) == 0:

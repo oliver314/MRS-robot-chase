@@ -11,13 +11,16 @@ To run robot chase:
 > roslaunch exercises robot_chase.launch mode_baddies:=BADDIES_MODE mode_police:=POLICE_MODE nr_baddies:=NR_BADDIES nr_police:=NR_POLICE
 
 e.g.
-roslaunch exercises robot_chase.launch mode_baddies:=potential_field mode_police:=potential_field nr_baddies:=3 nr_police:=3
+roslaunch exercises robot_chase.launch mode_baddies:=potential_field mode_police:=potential_field nr_baddies:=3 nr_police:=3 mode_estimator:=gt
 
 Modes for Baddies:
 'random', 'potential_field'
 
 Modes for Police:
-'closest', 'potential_field'
+'closest', 'potential_field', 'closest_rrt'
+
+Modes for Estimator:
+'gt', 'line_of_sight', 'lidar'
 
 
 worlds - simple.world, loads scene and physics. Contains folders with models. model.config loads model.sdf where walls and obstacles are specified
