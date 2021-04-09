@@ -67,8 +67,8 @@ class actor(object):
 class baddie(actor):
   def __init__(self, name, access_to_gt_pose=True):
     self._caught = False
-    self.est_pose = np.array([float('inf')] * 2)
-    self.est_variance = np.array([[float('inf')] * 2,[float('inf')] * 2])
+    self.est_pose = np.array([100] * 2)
+    self.est_variance = np.array([[100] * 2,[100] * 2])
     self.access_to_gt_pose = access_to_gt_pose
     super(baddie, self).__init__(name)
 
@@ -105,7 +105,9 @@ class baddie(actor):
       else:
         return np.array([self.est_pose[0], self.est_pose[1], 0])
 
-
+  @property
+  def gt_pose(self):
+      return self._pose()
 
 class police_car(actor):
   def __init__(self, name):

@@ -33,6 +33,7 @@ class Particle(object):
     self.xlim = xlim
     self.ylim = ylim
     self.map = map_img
+    self.caught = False
 
     # Choose a random position on the pose for the particles
     self.sample_random_pose()
@@ -68,8 +69,9 @@ class Particle(object):
     pose = pose.astype(np.int32)
 
     # Check if that location is valid
-    if not np.any((pose < 0) | (pose > size_px)) and self.map[pose[1]][pose[0]] == 255:
-      valid = True
+    if not np.any((pose < 0) | (pose > size_px)):
+      if self.map[pose[1]][pose[0]] == 255:
+        valid = True
 
     return valid
 
@@ -179,8 +181,12 @@ def update_particles(particles, num_particles, frame_id, police, baddie_loc):
 
   for i, p in enumerate(particles):
     pt = Point32()
-    pt.x = p.pose[0]
-    pt.y = p.pose[1]
+    if p.caught:
+      pt.x = 100
+      pt.y = 100
+    else:
+      pt.x = p.pose[0]
+      pt.y = p.pose[1]
     pt.z = .05
     particle_msg.points.append(pt)
     intensity_channel.values.append(p.weight)
@@ -263,12 +269,11 @@ def baddies_list_LoS(police, baddies, map_img):
 
   for i, baddie in enumerate(baddies):
     for police_car in police:
-      if not obstructed(police_car.pose[:2], baddie._pose()[:2], map_img):
-        baddies_identified[i] = baddie._pose()[:2]
+      if not obstructed(police_car.pose[:2], baddie.gt_pose[:2], map_img):
+        baddies_identified[i] = baddie.gt_pose[:2]
         break
 
   return baddies_identified
-
 
 # Create a list of points which represents baddies which the police can see via a Lidar
 def baddies_list_lidar(police, map_img, live_plot = True):
@@ -335,7 +340,6 @@ def baddies_list_lidar(police, map_img, live_plot = True):
 
   return baddies_identified
 
-
 # Link between previous assignment to baddies and new measurements
 def sort_baddies(temp_list, baddies_list):
   output_list = [None, None, None]
@@ -378,6 +382,16 @@ def sort_baddies(temp_list, baddies_list):
   return output_list
 
 
+def check_baddies_caught(particles, baddies, line_of_sight):
+  if line_of_sight:
+    for i in range(len(baddies)):
+      if baddies[i].caught and not particles[i][0].caught:
+        for p in particles[i]:
+          p.caught = True
+  else:
+    pass
+
+
 def get_baddies_estimation(police, baddies, prev_baddie_measurement,line_of_sight, map_img, particles, particle_publisher, num_particles, idx, live_plot):
 
     if line_of_sight:
@@ -388,12 +402,19 @@ def get_baddies_estimation(police, baddies, prev_baddie_measurement,line_of_sigh
 
     # Move, compute weight, resample particles
     for i, baddie_loc in enumerate(curr_baddie_measurement):
+
+      # Check if the baddies are actually caught
+      # - in which case disable particles and move them out of sight
+      check_baddies_caught(particles, baddies, line_of_sight)
+
       particles[i], particle_msg, mu, sigma = update_particles(particles[i], num_particles, idx, police, baddie_loc)
 
       # Set the estimated position and variance of each baddie
-      baddies[i].set_mu_sigma(mu, sigma)
+      if not baddies[i].caught:
+        baddies[i].set_mu_sigma(mu, sigma)
 
       # publish particles
+      #check_baddies_caught(particles, baddies, line_of_sight)
       particle_publisher[i].publish(particle_msg)
 
     return curr_baddie_measurement
