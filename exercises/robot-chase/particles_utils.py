@@ -378,3 +378,12 @@ def sort_baddies(temp_list, baddies_list):
           break
 
   return output_list
+
+
+def get_baddies_position(police, baddies, line_of_sight, map_img, live_plot):
+    if line_of_sight:
+      measured_baddie_position = baddies_list_LoS(police, baddies, map_img)
+    else:
+      temp_list = baddies_list_lidar(police, map_img, live_plot=live_plot)
+      measured_baddie_position = sort_baddies(temp_list, measured_baddie_position)
+    return measured_baddie_position

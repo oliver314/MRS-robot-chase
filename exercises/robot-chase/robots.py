@@ -30,10 +30,6 @@ class actor(object):
       self.groundtruth = GroundtruthPose(name)
       self.publisher = rospy.Publisher("/%s/cmd_vel" % name, Twist, queue_size=5)
       self.name = name
-      self.xy = np.transpose(np.asarray([[float('inf')] * 360,[float('inf')] * 360]))
-      self.est_pose = np.array([float('inf')] * 2)
-      self.est_variance = np.array([[float('inf')] * 2,[float('inf')] * 2])
-      rospy.Subscriber('/%s/scan' % name, LaserScan, self.lidar_callback)
 
     def _pose(self):
       while not self.groundtruth.ready:
@@ -45,41 +41,21 @@ class actor(object):
         time.sleep(0.1)
       return self.laser.measurements
 
-    def lidar_scan(self):
-      while not self.lidar.ready:
-        time.sleep(0.1)
-      return self.lidar.measurements
-
     def set_vel_holonomic(self, x, y):
       u, w = feedback_linearized(self.pose, [x, y], 0.3)
       self.set_vel(u, w)
 
-    def lidar_callback(self, msg):
-
-      theta = np.linspace(0, 2*np.pi, 360, endpoint=False) + self.pose[2]
-      r = msg.ranges
-
-      self.xy = np.transpose(np.array([r*np.cos(theta) + self.pose[0], r*np.sin(theta) + self.pose[1]]))
-
-    def set_mu_sigma(self, mu, sigma):
-      self.est_pose = mu
-      self.est_variance = sigma
-
     @property
     def pose(self):
-      return self._pose()
-
-    @property
-    def lidar_xy(self):
-      return self.xy
-
-    def set_vel(self, u, w):
-      pass
+        return self._pose()
 
 
 class baddie(actor):
-  def __init__(self, name):
+  def __init__(self, name, access_to_gt_pose=True):
     self._caught = False
+    self.est_pose = np.array([float('inf')] * 2)
+    self.est_variance = np.array([[float('inf')] * 2,[float('inf')] * 2])
+    self.access_to_gt_pose = access_to_gt_pose
     super(baddie, self).__init__(name)
 
   def set_vel(self, u, w):
@@ -103,11 +79,45 @@ class baddie(actor):
     self._caught = value
 
 
+  def set_mu_sigma(self, mu, sigma):
+    self.est_pose = mu
+    self.est_variance = sigma
+
+
+  @property
+  def pose(self):
+      if self.access_to_gt_pose:
+        return self._pose()
+      else:
+        return self.est_pose
+
+
 
 class police_car(actor):
+  def __init__(self, name):
+      self.xy = np.transpose(np.asarray([[float('inf')] * 360,[float('inf')] * 360]))
+      rospy.Subscriber('/%s/scan' % name, LaserScan, self.lidar_callback)
+      super(police_car, self).__init__(name)
 
   def set_vel(self, u, w):
     vel_msg = Twist()
     vel_msg.linear.x = max(-MAX_VELOCITY_POLICE, min(u, MAX_VELOCITY_POLICE))
     vel_msg.angular.z = max(-MAX_ANGULAR_VELOCITY, min(w, MAX_ANGULAR_VELOCITY))
     self.publisher.publish(vel_msg)
+
+
+  def lidar_scan(self):
+    while not self.lidar.ready:
+      time.sleep(0.1)
+    return self.lidar.measurements
+
+  
+  def lidar_callback(self, msg):
+      theta = np.linspace(0, 2*np.pi, 360, endpoint=False) + self.pose[2]
+      r = msg.ranges
+      self.xy = np.transpose(np.array([r*np.cos(theta) + self.pose[0], r*np.sin(theta) + self.pose[1]]))
+
+
+  @property
+  def lidar_xy(self):
+    return self.xy

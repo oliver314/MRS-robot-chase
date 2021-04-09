@@ -13,9 +13,7 @@ import matplotlib.pyplot as plt
 
 from robots import baddie, police_car
 from utils import get_repulsive_field_from_obstacles, normalize
-from particles_utils import Particle, update_particles, world_to_pixel, \
-                            obstructed, baddies_list_LoS, baddies_list_lidar, \
-                            sort_baddies
+from particles_utils import Particle, update_particles, get_baddies_position
 
 from sensor_msgs.msg import PointCloud
 from rrt import rrt_wrapper
@@ -192,7 +190,8 @@ def run(args):
 
   # True: use line of sight to estimate baddie position
   # False: use lidar to estimate baddie position
-  line_of_sight = False
+  line_of_sight = True
+  live_plot = True
 
   ##### Particles and estimation - Setup END
 
@@ -208,8 +207,9 @@ def run(args):
   police = [police_car(name) for name in police_names]
 
   # live plotting setup
-  plt.ion()
-  plt.show()
+  if live_plot:
+  	plt.ion()
+  	plt.show()
 
 
   # Main loop
@@ -221,12 +221,7 @@ def run(args):
     check_if_any_caught(police, baddies)
 
     # Locate baddie positions and assign them to three baddie1, baddie2, baddie3
-    if line_of_sight:
-      measured_baddie_position = baddies_list_LoS(police, baddies, map_img)
-    else:
-      temp_list = baddies_list_lidar(police, map_img, live_plot=True)
-      measured_baddie_position = sort_baddies(temp_list, measured_baddie_position)
-
+    measured_baddie_position = get_baddies_position(police, baddies, line_of_sight, map_img, live_plot)
 
     # Move, compute weight, resample particles
     for i, baddie_loc in enumerate(measured_baddie_position):
