@@ -17,7 +17,10 @@ Modes for Baddies:
 'random', 'potential_field'
 
 Modes for Police:
-'closest', 'potential_field'
+'closest', 'potential_field', 'closest_rrt'
+
+Modes for Estimator:
+'gt', 'line_of_sight', 'lidar'
 
 
 worlds - simple.world, loads scene and physics. Contains folders with models. model.config loads model.sdf where walls and obstacles are specified

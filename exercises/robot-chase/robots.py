@@ -41,8 +41,23 @@ class actor(object):
         time.sleep(0.1)
       return self.laser.measurements
 
-    def set_vel_holonomic(self, x, y):
-      u, w = feedback_linearized(self.gt_pose, [x, y], 0.3)
+
+    def set_vel_holonomic(self, x, y, backup=False):
+
+      u, w = feedback_linearized(self.pose, [x, y], 0.2)
+      
+      if backup:
+        # could also have a stuck_history variable, counting how long the police car hasn t moved for
+        front, front_right, front_left, _, _ = self.scan()
+        #print(front)
+        if front <0.22:
+          print("Emergency rule based controller jumps in with front = " + str(front))
+          u = -0.2
+          if front_left < front_right:
+            w = -1
+          else:
+            w = 1
+
       self.set_vel(u, w)
 
     @property
