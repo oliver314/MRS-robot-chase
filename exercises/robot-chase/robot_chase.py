@@ -102,7 +102,7 @@ def baddies_pot_field_method(baddies, police):
     obstacle_positions = np.append(CYLINDER_POSITIONS, np.array([police_car.pose[:2] for police_car in police]), 0)
     obstacle_radii = np.append(CYLINDER_RADIUSS, [0.01 for police_car in police], 0)
 
-    v = get_repulsive_field_from_obstacles(baddie.pose[:2], P_gain_repulsive, rep_cutoff_distance, WALL_OFFSET, obstacle_positions, obstacle_radii)
+    v = get_repulsive_field_from_obstacles(baddie.gt_pose[:2], P_gain_repulsive, rep_cutoff_distance, WALL_OFFSET, obstacle_positions, obstacle_radii)
     
     baddie.set_vel_holonomic(*v)
 
@@ -135,7 +135,7 @@ def police_pot_field_method(police, baddies):
 def check_if_any_caught(police, baddies):
   for police_car in police:
     for baddie in baddies:
-      if np.linalg.norm(police_car.pose[:2] - baddie.pose[:2]) < DISTANCE_CONSIDERED_CAUGHT:
+      if np.linalg.norm(police_car.pose[:2] - baddie.gt_pose[:2]) < DISTANCE_CONSIDERED_CAUGHT:
         baddie.caught = True
 
 def check_if_all_caught(police, baddies):
@@ -222,6 +222,12 @@ def run(args):
       # Updates the pose estimation of baddies
       prev_baddie_measurement = get_baddies_estimation(police, baddies, prev_baddie_measurement, mode_estimator=='line_of_sight', map_img,
                                                        particles, particle_publisher, num_particles, idx, live_plot)
+
+    # Print baddie positions
+    #print("baddie1: ", baddies[0].pose)
+    #print("baddie2: ", baddies[1].pose)
+    #print("baddie3: ", baddies[2].pose)
+    #print("\n\n")
 
     if check_if_all_caught(police, baddies):
       print("Done in iteration %d" % idx)
