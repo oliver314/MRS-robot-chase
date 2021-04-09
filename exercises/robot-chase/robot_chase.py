@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 from robots import baddie, police_car
 from utils import get_repulsive_field_from_obstacles, normalize
-from particles_utils import Particle, update_particles, get_baddies_position
+from particles_utils import Particle, get_baddies_estimation
 
 from sensor_msgs.msg import PointCloud
 from rrt import rrt_wrapper
@@ -186,7 +186,7 @@ def run(args):
     particles.append([Particle(xlim, ylim, map_img) for _ in range(num_particles)])
 
   # init baddies measured position list
-  measured_baddie_position = [None, None, None]
+  prev_baddie_measurement = [None, None, None]
 
   # True: use line of sight to estimate baddie position
   # False: use lidar to estimate baddie position
@@ -208,8 +208,8 @@ def run(args):
 
   # live plotting setup
   if live_plot:
-  	plt.ion()
-  	plt.show()
+    plt.ion()
+    plt.show()
 
 
   # Main loop
@@ -220,15 +220,8 @@ def run(args):
 
     check_if_any_caught(police, baddies)
 
-    # Locate baddie positions and assign them to three baddie1, baddie2, baddie3
-    measured_baddie_position = get_baddies_position(police, baddies, line_of_sight, map_img, live_plot)
-
-    # Move, compute weight, resample particles
-    for i, baddie_loc in enumerate(measured_baddie_position):
-      particles[i], particle_msg = update_particles(particles[i], num_particles, idx, police, baddies[i], baddie_loc)
-
-      # publish particles
-      particle_publisher[i].publish(particle_msg)
+    # Updates the pose estimation of baddies
+    prev_baddie_measurement = get_baddies_estimation(police, baddies, prev_baddie_measurement,line_of_sight, map_img, particles, particle_publisher, num_particles, idx, live_plot)
 
     if check_if_all_caught(police, baddies):
       print("Done in iteration %d" % idx)

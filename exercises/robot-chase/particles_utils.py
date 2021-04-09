@@ -142,7 +142,7 @@ class Particle(object):
 # Functions
 ###############
 
-def update_particles(particles, num_particles, frame_id, police, baddie, baddie_loc):
+def update_particles(particles, num_particles, frame_id, police, baddie_loc):
 
   total_weight = 0.
   # move particles and calculate weight
@@ -198,9 +198,7 @@ def update_particles(particles, num_particles, frame_id, police, baddie, baddie_
     sigma[1][0] += (p.pose[0] - mu[0]) * (p.pose[1] - mu[1]) / num_particles
     sigma[1][1] += (p.pose[1] - mu[1]) ** 2 / num_particles
 
-  baddie.set_mu_sigma(mu, sigma)
-
-  return particles, particle_msg
+  return particles, particle_msg, mu, sigma
 
 # Convert a single point from world coordinates to pixel coordinates
 def world_to_pixel(point):
@@ -380,10 +378,22 @@ def sort_baddies(temp_list, baddies_list):
   return output_list
 
 
-def get_baddies_position(police, baddies, line_of_sight, map_img, live_plot):
+def get_baddies_estimation(police, baddies, prev_baddie_measurement,line_of_sight, map_img, particles, particle_publisher, num_particles, idx, live_plot):
+
     if line_of_sight:
-      measured_baddie_position = baddies_list_LoS(police, baddies, map_img)
+      curr_baddie_measurement = baddies_list_LoS(police, baddies, map_img)
     else:
       temp_list = baddies_list_lidar(police, map_img, live_plot=live_plot)
-      measured_baddie_position = sort_baddies(temp_list, measured_baddie_position)
-    return measured_baddie_position
+      curr_baddie_measurement = sort_baddies(temp_list, prev_baddie_measurement)
+
+    # Move, compute weight, resample particles
+    for i, baddie_loc in enumerate(curr_baddie_measurement):
+      particles[i], particle_msg, mu, sigma = update_particles(particles[i], num_particles, idx, police, baddie_loc)
+
+      # Set the estimated position and variance of each baddie
+      baddies[i].set_mu_sigma(mu, sigma)
+
+      # publish particles
+      particle_publisher[i].publish(particle_msg)
+
+    return curr_baddie_measurement
