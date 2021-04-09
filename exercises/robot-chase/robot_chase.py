@@ -172,6 +172,7 @@ def run(args):
 
   nr_baddies = args.nr_baddies
   nr_police = args.nr_police
+  mode_estimator = args.mode_estimator
 
 
   ##### Particles and estimation - Setup START
@@ -188,9 +189,6 @@ def run(args):
   # init baddies measured position list
   measured_baddie_position = [None, None, None]
 
-  # True: use line of sight to estimate baddie position
-  # False: use lidar to estimate baddie position
-  line_of_sight = True
   live_plot = True
 
   ##### Particles and estimation - Setup END
@@ -203,7 +201,7 @@ def run(args):
   police_names = ["police" + str(i+1) for i in range(int(nr_police))]
   baddies_names = ["baddie" + str(i+1) for i in range(int(nr_baddies))]
 
-  baddies = [baddie(name) for name in baddies_names]
+  baddies = [baddie(name, mode_estimator=='gt') for name in baddies_names]
   police = [police_car(name) for name in police_names]
 
   # live plotting setup
@@ -220,15 +218,16 @@ def run(args):
 
     check_if_any_caught(police, baddies)
 
-    # Locate baddie positions and assign them to three baddie1, baddie2, baddie3
-    measured_baddie_position = get_baddies_position(police, baddies, line_of_sight, map_img, live_plot)
+    if mode_estimator != 'gt':
+	    # Locate baddie positions and assign them to three baddie1, baddie2, baddie3
+	    measured_baddie_position = get_baddies_position(police, baddies, mode_estimator=='line_of_sight', map_img, live_plot)
 
-    # Move, compute weight, resample particles
-    for i, baddie_loc in enumerate(measured_baddie_position):
-      particles[i], particle_msg = update_particles(particles[i], num_particles, idx, police, baddies[i], baddie_loc)
+	    # Move, compute weight, resample particles
+	    for i, baddie_loc in enumerate(measured_baddie_position):
+	      particles[i], particle_msg = update_particles(particles[i], num_particles, idx, police, baddies[i], baddie_loc)
 
-      # publish particles
-      particle_publisher[i].publish(particle_msg)
+	      # publish particles
+	      particle_publisher[i].publish(particle_msg)
 
     if check_if_all_caught(police, baddies):
       print("Done in iteration %d" % idx)
@@ -243,6 +242,7 @@ if __name__ == '__main__':
   parser.add_argument('--mode_police', action='store', default='closest', help='Method.', choices=['closest', 'closest_rrt', 'potential_field', 'est_test'])
   parser.add_argument('--nr_baddies', action='store', default=3)
   parser.add_argument('--nr_police', action='store', default=3)
+  parser.add_argument('--mode_estimator', action='store', default='gt', help='Gt - police has access to gt baddie pose; line_of_sight - use geometrical line_of_sight; lidar - use lidar', choices = ['gt', 'line_of_sight', 'lidar'])
   args, unknown = parser.parse_known_args()
   try:
     run(args)

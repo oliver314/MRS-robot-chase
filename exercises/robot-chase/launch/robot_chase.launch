@@ -2,7 +2,8 @@
 	<arg name="mode_baddies" />
 	<arg name="mode_police" />
   <arg name="nr_police" default="3"/> 
-  <arg name="nr_baddies" default="3"/> 
+  <arg name="nr_baddies" default="3"/>
+  <arg name="mode_estimator" default="gt"/> 
 	
 	
    <!--include file="$(find exercises)/robot-chase/launch/gazebo_chase.launch">
@@ -11,5 +12,5 @@
    </include-->
 
 
-	<node pkg="exercises" type="robot_chase.py" name="robot_chase" args="--mode_baddies=$(arg mode_baddies) --mode_police=$(arg mode_police) --nr_police=$(arg nr_police) --nr_baddies=$(arg nr_baddies)" output="screen"></node>
+	<node pkg="exercises" type="robot_chase.py" name="robot_chase" args="--mode_baddies=$(arg mode_baddies) --mode_police=$(arg mode_police) --nr_police=$(arg nr_police) --nr_baddies=$(arg nr_baddies) --mode_estimator=$(arg mode_estimator)" output="screen"></node>
 </launch>
