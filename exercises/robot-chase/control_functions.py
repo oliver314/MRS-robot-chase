@@ -221,4 +221,4 @@ def police_pot_field_method(police, baddies):
             if not baddie.caught:
                 v += - P_gain * normalize(police_car.pose[:2] - baddie.pose[:2])
                 break
-    police_car.set_vel_holonomic(*v)
+        police_car.set_vel_holonomic(*v)

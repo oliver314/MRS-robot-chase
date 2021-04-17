@@ -17,7 +17,7 @@ import rospy
 from utils import SimpleLaser, GroundtruthPose, feedback_linearized
 
 
-MAX_VELOCITY_POLICE = 0.6
+MAX_VELOCITY_POLICE = 0.7
 MAX_VELOCITY_BADDIES = 1
 MAX_ANGULAR_VELOCITY = 0.8
 
@@ -57,7 +57,6 @@ class actor(object):
             w = -5
           else:
             w = 5
-
       self.set_vel(u, w)
 
     @property
