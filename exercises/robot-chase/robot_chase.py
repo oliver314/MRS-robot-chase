@@ -27,8 +27,8 @@ CYLINDER_RADIUSS = [.3]
 # Map occupancy information
 size_m = 10		 # 10m x 10m size
 resolution_m = 0.01 # 1cm resolution
-size_px = int(size_m/resolution_m) # image is of size: size_px x size_px
 MAP_NAME = "simple_world_big"
+#MAP_NAME = "cluttered_world"
 
 # Limits (in meters) for x and y in the environment
 xlim = [-4, 4]
@@ -36,8 +36,10 @@ ylim = [-4, 4]
 
 
 # load world image
-path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worlds/'+MAP_NAME+'/map.png')
-map_img = cv2.imread(path, 0)
+path_thick = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worlds/'+MAP_NAME+'/map_thick.png')
+path_thin = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worlds/'+MAP_NAME+'/map_thin.png')
+map_thick_img = cv2.imread(path_thick, 0)
+map_thin_img = cv2.imread(path_thin, 0)
 
 
 # ----------------------------SUPPORT FUNCTIONS ----------------------------
@@ -93,6 +95,9 @@ def run(args):
 	nr_police = args.nr_police
 	mode_estimator = args.mode_estimator
 
+	map_img = map_thick_img
+	if mode_estimator == 'line_of_sight':
+		map_img = map_thin_img
 
 	##### Particles and estimation - Setup START
 
@@ -109,7 +114,7 @@ def run(args):
 	prev_baddie_measurement = [None] * int(nr_baddies)
 
 	# Live plot of lidar measurements if you are using lidar to estimate baddies positions
-	live_plot = False
+	live_plot = True
 
 	##### Particles and estimation - Setup END
 
@@ -128,10 +133,15 @@ def run(args):
 		plt.ion()
 		plt.show()
 
+	# Setup pose recording for plotting
+	pose_history = []
+	with open('/tmp/gazebo_exercise.txt', 'w'):
+		pass
+
 	# Main loop
 	while not rospy.is_shutdown():
-		baddies_method(baddies, police)
-		police_method(police, baddies)
+		#baddies_method(baddies, police)
+		#police_method(police, baddies)
 
 		check_if_any_caught(police, baddies)
 
@@ -150,6 +160,13 @@ def run(args):
 			break
 		idx += 1
 
+		# logging here
+		#pose_history.append(np.concatenate([groundtruth.pose, absolute_point_position], axis=0))
+		pose_history.append([baddies[0].gt_pose])
+		if len(pose_history) % 10:
+			with open('/tmp/gazebo_exercise.txt', 'a') as fp:
+				fp.write('\n'.join(','.join(str(v) for v in p) for p in pose_history) + '\n')
+				pose_history = []
 		rate_limiter.sleep()
 
 if __name__ == '__main__':

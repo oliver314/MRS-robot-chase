@@ -18,18 +18,27 @@ draw_thickness = int(2 * inflation_m / resolution_m)
 
 # Define the world here (assume rectangle)
 # horizontal, vertical, centre x, centre y, angle=0, fill=-1
-world = [8.15, 8.15, 0, 0, 0, -1]
+world = [8, 8, 0, 0, 0, -1]
 
 # Define rectangles here
 # horizontal, vertical, centre x, centre y, angle (degrees), fill
 rect1 = [8.15, 8.15, 0, 0, 0, 0]
 
-rect = [world, rect1]
+''' Cluttered world stuff: '''
+rect2 = [0.25, 5.21, 2.12, -0.28, 0, 1]
+rect3 = [1.65, 0.25, 1.41, 2.45, 0, 1]
+rect4 = [1.3, 1.33, -1.94, 1.7, 0, 1]
+rect5 = [1.33, 1.32, -1.91, -2.34, 0, 1]
+
+#rect = [world, rect1]
+rect = [world, rect1, rect2, rect3, rect4, rect5]
 
 # Define circles here
 # radius, centre x, centre y, fill
-circle1 = [0.3, 0.3, 0.2, 1]
-#circle2 = [0.01, 0, 0]
+#circle1 = [0.3, 0.3, 0.2, 1]
+
+''' Cluttered world stuff: '''
+circle1 = [0.65, 0.06, -0.3, 1]
 
 circle = [circle1]#, circle2]
 
@@ -94,6 +103,10 @@ cv2.waitKey(0)
 cv2.destroyAllWindows()
 
 path = os.path.abspath(os.getcwd())
-path = os.path.join(path, "../map.png")
+
+if inflation_m > 0.1:
+    path = os.path.join(path, "cluttered_world/map_thick.png")
+else:
+    path = os.path.join(path, "cluttered_world/map_thin.png")
 
 cv2.imwrite(path, img)
