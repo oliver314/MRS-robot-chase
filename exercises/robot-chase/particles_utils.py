@@ -118,7 +118,7 @@ class Particle(object):
       weight = 0
       dist = np.linalg.norm(baddie_loc - self._pose[:2])
       if dist < baddie_low_th:
-        weight = max(100*gain/baddie_low_th, weight)
+        weight = max(10*gain/baddie_low_th, weight)
       elif dist < baddie_high_th:
         weight = max(gain/dist, weight)
 
@@ -338,7 +338,18 @@ def baddies_list_lidar(police, baddies, map_img, live_plot = True):
 
   if np.shape(detected_points)[0] > 0 and live_plot:
     plt.clf()
-    plt.scatter(detected_points[:,0], detected_points[:,1])
+    plt.scatter(detected_points[:,0], detected_points[:,1], c='g', s=20)
+    for police_car in police:
+      plt.scatter(police_car.pose[0], police_car.pose[1], c='b', s=35)
+    for baddie in baddies:
+      plt.scatter(baddie.gt_pose[0], baddie.gt_pose[1], c='r', s=35)
+    plt.xlim([-2, 4.2])
+    plt.ylim([-2, 4.2])
+    plt.grid(True)
+    plt.xlabel("x",fontsize=15)
+    plt.ylabel("y",fontsize=15)
+    plt.xticks(fontsize=13)
+    plt.yticks(fontsize=13)
     plt.draw()
     plt.pause(0.001)
 

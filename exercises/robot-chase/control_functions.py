@@ -21,6 +21,7 @@ size_m = 10		 # 10m x 10m size
 resolution_m = 0.01 # 1cm resolution
 size_px = int(size_m/resolution_m) # image is of size: size_px x size_px
 MAP_NAME = "simple_world_big"
+#MAP_NAME = "cluttered_world"
 
 # --------------------------- CONTROL METHODS ------------------------
 

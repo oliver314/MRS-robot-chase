@@ -431,7 +431,7 @@ def draw_solution(start_node, final_node=None):
 class rrt_wrapper:
   def __init__(self, size_px, resolution, map_name="simple_world_big"):
     # Load map.
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worlds/'+map_name+'/map.png')
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worlds/'+map_name+'/map_thin.png')
     img = cv2.imread(path, 0)
     occupancy_grid = np.empty_like(img, dtype=np.int8)
     occupancy_grid[:] = UNKNOWN
