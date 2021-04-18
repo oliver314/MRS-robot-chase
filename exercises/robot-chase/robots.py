@@ -50,13 +50,13 @@ class actor(object):
         # could also have a stuck_history variable, counting how long the police car hasn t moved for
         front, front_right, front_left, _, _ = self.scan()
         #print(front)
-        if front <0.22 or front_left < 0.2 or front_right < 0.2:
+        '''if front <0.22 or front_left < 0.2 or front_right < 0.2:
           print("Emergency rule based controller jumps in with front = " + str(front))
           u = -0.2
           if front_left < front_right:
             w = -5
           else:
-            w = 5
+            w = 5'''
       self.set_vel(u, w)
 
     @property

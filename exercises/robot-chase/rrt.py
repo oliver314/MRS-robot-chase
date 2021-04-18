@@ -12,7 +12,8 @@ import scipy.signal
 import yaml
 import cv2
 import threading
-
+import math
+import time
 
 # Constants used for indexing.
 X = 0
@@ -445,6 +446,7 @@ class rrt_wrapper:
     #self.occupancy_grid.draw()
     self.current_path = {}
     self.called_idx = {}
+    self.unsuccesful_idx = {}
     self.rrt_thread = {}
     self.draw = False
     if self.draw:
@@ -454,11 +456,34 @@ class rrt_wrapper:
 
   def re_evaluate_path_thread(self, start_pose, target_pose, police_car, current_path, called_idx, occupancy_grid):
       start_node, final_node = rrt(start_pose, target_pose, occupancy_grid)
-      if final_node is None:
-        final_node = Node(np.array([target_pose[0], target_pose[1], 0]))
-        final_node.parent = Node(start_pose)
 
-      current_path[police_car.name] = get_path(final_node)
+      front, front_right, front_left, _, _ = police_car.scan()
+      
+      if police_car.name not in self.unsuccesful_idx:
+        self.unsuccesful_idx[police_car.name] = 0
+
+      if final_node is None:
+        self.unsuccesful_idx[police_car.name] += 1
+        if self.unsuccesful_idx[police_car.name] > 40:
+          self.unsuccesful_idx[police_car.name] = 0
+        if self.unsuccesful_idx[police_car.name] > 15:
+          print("Backup no path")
+          current_path[police_car.name] = [[police_car.pose[0] - 0.3*math.cos(police_car.pose[2]), police_car.pose[1] - 0.3*math.sin(police_car.pose[2])]]
+          time.sleep(0.1)
+        else:
+          final_node = Node(np.array([target_pose[0], target_pose[1], 0]))
+          final_node.parent = Node(start_pose)
+          current_path[police_car.name] = get_path(final_node)
+      elif front <0.22 or front_left < 0.2 or front_right < 0.2:
+        self.unsuccesful_idx[police_car.name] += 1
+        if self.unsuccesful_idx[police_car.name] > 20:
+          print("Backup lidar")
+          current_path[police_car.name] = [[police_car.pose[0] - 0.3*math.cos(police_car.pose[2]), police_car.pose[1] - 0.3*math.sin(police_car.pose[2])]]
+          time.sleep(0.5)
+      else:
+        self.unsuccesful_idx[police_car.name] = 0
+        current_path[police_car.name] = get_path(final_node)
+
       called_idx[police_car.name] = 0
 
       # only works if not in thread
@@ -489,5 +514,6 @@ class rrt_wrapper:
         
       self.called_idx[police_car.name] += 1
       v = get_velocity(start_pose[:2], np.array(self.current_path[police_car.name], dtype=np.float32))
-      #print("Update velocity!")
+      #print("Update velocity to " + str(v))
+      #time.sleep(0.1)
       return v
