@@ -434,6 +434,8 @@ class rrt_wrapper:
     # Load map.
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worlds/'+map_name+'/map_thin.png')
     img = cv2.imread(path, 0)
+    #cv2.imshow('d', img)
+    #cv2.waitKey(0)
     occupancy_grid = np.empty_like(img, dtype=np.int8)
     occupancy_grid[:] = UNKNOWN
     occupancy_grid[img < .1*255] = OCCUPIED
@@ -466,7 +468,7 @@ class rrt_wrapper:
         self.unsuccesful_idx[police_car.name] += 1
         if self.unsuccesful_idx[police_car.name] > 40:
           self.unsuccesful_idx[police_car.name] = 0
-        if self.unsuccesful_idx[police_car.name] > 15:
+        if self.unsuccesful_idx[police_car.name] > 5:
           print("Backup no path")
           current_path[police_car.name] = [[police_car.pose[0] - 0.3*math.cos(police_car.pose[2]), police_car.pose[1] - 0.3*math.sin(police_car.pose[2])]]
           time.sleep(0.1)
@@ -476,7 +478,7 @@ class rrt_wrapper:
           current_path[police_car.name] = get_path(final_node)
       elif front <0.22 or front_left < 0.2 or front_right < 0.2:
         self.unsuccesful_idx[police_car.name] += 1
-        if self.unsuccesful_idx[police_car.name] > 20:
+        if self.unsuccesful_idx[police_car.name] > 10:
           print("Backup lidar")
           current_path[police_car.name] = [[police_car.pose[0] - 0.3*math.cos(police_car.pose[2]), police_car.pose[1] - 0.3*math.sin(police_car.pose[2])]]
           time.sleep(0.5)

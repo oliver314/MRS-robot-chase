@@ -12,7 +12,7 @@ resolution_m = 0.01 # 1cm resolution
 size_px = int(size_m/resolution_m) # image is of size: size_px x size_px
 
 # set inflation of lines. (centre to edge inflation distance)
-inflation_m = 0.3
+inflation_m = 0.001
 draw_thickness = int(2 * inflation_m / resolution_m)
 
 
@@ -25,7 +25,7 @@ world = [8, 8, 0, 0, 0, -1]
 rect1 = [8.15, 8.15, 0, 0, 0, 0]
 
 ''' Cluttered world stuff: '''
-rect2 = [0.25, 5.21, 2.12, -0.28, 0, 1]
+rect2 = [0.2, 5, 2.12, -0.28, 0, 1]
 rect3 = [1.65, 0.25, 1.41, 2.45, 0, 1]
 rect4 = [1.3, 1.33, -1.94, 1.7, 0, 1]
 rect5 = [1.33, 1.32, -1.91, -2.34, 0, 1]

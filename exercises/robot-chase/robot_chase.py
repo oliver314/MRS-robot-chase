@@ -27,8 +27,8 @@ CYLINDER_RADIUSS = [.3]
 # Map occupancy information
 size_m = 10		 # 10m x 10m size
 resolution_m = 0.01 # 1cm resolution
-MAP_NAME = "simple_world_big"
-#MAP_NAME = "cluttered_world"
+#MAP_NAME = "simple_world_big"
+MAP_NAME = "cluttered_world"
 
 # Limits (in meters) for x and y in the environment
 xlim = [-4, 4]
@@ -96,8 +96,9 @@ def run(args):
 	mode_estimator = args.mode_estimator
 
 	map_img = map_thick_img
-	if mode_estimator == 'line_of_sight':
+	if mode_estimator == 'line_of_sight' or mode_estimator == 'gt':
 		map_img = map_thin_img
+		print("Thin map")
 
 	##### Particles and estimation - Setup START
 
@@ -114,7 +115,7 @@ def run(args):
 	prev_baddie_measurement = [None] * int(nr_baddies)
 
 	# Live plot of lidar measurements if you are using lidar to estimate baddies positions
-	live_plot = True
+	live_plot = False
 
 	##### Particles and estimation - Setup END
 
@@ -140,8 +141,8 @@ def run(args):
 
 	# Main loop
 	while not rospy.is_shutdown():
-		#baddies_method(baddies, police)
-		#police_method(police, baddies)
+		baddies_method(baddies, police)
+		police_method(police, baddies)
 
 		check_if_any_caught(police, baddies)
 
