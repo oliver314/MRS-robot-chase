@@ -135,3 +135,20 @@ def get_repulsive_field_from_obstacles(position, a, b, WALL_OFFSET, obstacle_pos
     v = adapt_v(delta_x_vector_to_wall, v)
     
     return v
+
+def logging_function(baddies, police, idx):
+
+  output = [idx]
+  for baddie in baddies:
+    min_error = 100
+    for baddie2 in baddies:
+      error = np.linalg.norm(baddie2.gt_pose[:2] - baddie.pose[:2])
+      if error < min_error:
+        min_error = error
+    det_var = np.linalg.det(baddie.est_variance)
+    output.append(min_error)
+    output.append(det_var)
+    output.append(baddie.est_variance[0][0]**2 + baddie.est_variance[1][1]**2)
+  return output
+  #[idx, b1.gt_pose[0], b1.gt_pose[1], b1.pose[0], b1.pose[1],
+  #      b1.est_variance[0][0], b1.est_variance[0][1], b1.est_variance[1][0], b1.est_variance[1][1]]

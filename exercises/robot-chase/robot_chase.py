@@ -18,17 +18,18 @@ from control_functions import baddies_random_movement_method, baddies_pot_field_
 								police_rrt_one_on_one_method, police_rrt_zone_method
 
 from sensor_msgs.msg import PointCloud
+from utils import logging_function
 
 DISTANCE_CONSIDERED_CAUGHT = 0.25
-WALL_OFFSET = 4.
+WALL_OFFSET = 4.3
 CYLINDER_POSITIONS = np.array([[.3, .2]], dtype=np.float32)
 CYLINDER_RADIUSS = [.3]
 
 # Map occupancy information
 size_m = 10		 # 10m x 10m size
 resolution_m = 0.01 # 1cm resolution
-#MAP_NAME = "simple_world_big"
-MAP_NAME = "cluttered_world"
+MAP_NAME = "simple_world_big"
+#MAP_NAME = "cluttered_world"
 
 # Limits (in meters) for x and y in the environment
 xlim = [-4, 4]
@@ -66,6 +67,7 @@ def check_if_all_caught(police, baddies):
 
 # ----------------------------MAIN FUNCTION ----------------------------
 
+
 def run(args):
 	rospy.init_node('robot_chase')
 
@@ -82,7 +84,8 @@ def run(args):
 		police_method = police_closest_rrt_method
 	elif args.mode_police == "potential_field":
 		police_method = police_pot_field_method
-	elif args.mode_police == "rrt_all_on_one":
+	elif args.mode_police == "" \
+							 "":
 		police_method = police_rrt_all_on_one_method
 	elif args.mode_police == "rrt_one_on_one":
 		police_method = police_rrt_one_on_one_method
@@ -139,6 +142,7 @@ def run(args):
 	with open('/tmp/gazebo_exercise.txt', 'w'):
 		pass
 
+	fwd = False
 	# Main loop
 	while not rospy.is_shutdown():
 		baddies_method(baddies, police)
@@ -159,15 +163,15 @@ def run(args):
 		if check_if_all_caught(police, baddies):
 			print("Done in iteration %d" % idx)
 			break
-		idx += 1
 
 		# logging here
-		#pose_history.append(np.concatenate([groundtruth.pose, absolute_point_position], axis=0))
-		pose_history.append([baddies[0].gt_pose])
+		pose_history.append(logging_function(baddies, police, idx))
 		if len(pose_history) % 10:
 			with open('/tmp/gazebo_exercise.txt', 'a') as fp:
 				fp.write('\n'.join(','.join(str(v) for v in p) for p in pose_history) + '\n')
 				pose_history = []
+
+		idx += 1
 		rate_limiter.sleep()
 
 if __name__ == '__main__':

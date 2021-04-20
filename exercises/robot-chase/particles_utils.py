@@ -379,6 +379,8 @@ def sort_baddies(curr_measurement, prev_measurement, num_baddies):
   # Go through the baddies the previous measurement list and compared length with current measurement
   recorded = []
   for n in range(len(curr_measurement)):
+    if n > 2:
+      break
     measurement = prev_measurement[n]
     if measurement is not None:
       closest = [10000., None]

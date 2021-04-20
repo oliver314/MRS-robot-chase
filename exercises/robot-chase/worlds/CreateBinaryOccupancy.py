@@ -12,7 +12,7 @@ resolution_m = 0.01 # 1cm resolution
 size_px = int(size_m/resolution_m) # image is of size: size_px x size_px
 
 # set inflation of lines. (centre to edge inflation distance)
-inflation_m = 0.001
+inflation_m = 0.1
 draw_thickness = int(2 * inflation_m / resolution_m)
 
 
@@ -104,7 +104,7 @@ cv2.destroyAllWindows()
 
 path = os.path.abspath(os.getcwd())
 
-if inflation_m > 0.1:
+if inflation_m > 0.2:
     path = os.path.join(path, "cluttered_world/map_thick.png")
 else:
     path = os.path.join(path, "cluttered_world/map_thin.png")
